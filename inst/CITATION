@@ -1,0 +1,23 @@
+citHeader("To cite HarmonicRegression in publications use:")
+
+citEntry(entry = "Article",
+  title        = "Rhythmic degradation explains and unifies circadian transcriptome and proteome data",
+  author       = personList(as.person("Sarah Lück"),
+                   as.person("Kevin Thurley"),
+                    as.person("Paul F. Thaben"),
+                    as.person("Pål O. Westermark")),
+  journal      = "Cell Reports",
+  year         = "2014",
+  volume       = "9",
+  pages        = "741--751",
+  url          = "https://www.ncbi.nlm.nih.gov/pubmed/25373909",
+  
+  textVersion  =
+  paste("Sarah Lueck, Kevin Thurley,",
+        "Paul F. Thaben, Pål O. Westermark (2014).",
+        "Rhythmic degradation explains and unifies circadian transcriptome and",
+        "proteome data.",
+        "Cell Reports, 9, 741--751.",
+        "URL https://www.ncbi.nlm.nih.gov/pubmed/25373909.")
+
+)

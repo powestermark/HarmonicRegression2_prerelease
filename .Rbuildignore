@@ -1,0 +1,9 @@
+^fixed_bugs\.md$
+^R/fixed_bugs\.md$
+^sandbox$
+^tests/tests\.R$
+^.*\.Rproj$
+^\.Rproj\.user$
+^cran-comments\.md$
+^doc$
+^Meta$

@@ -1,0 +1,25 @@
+Package: HarmonicRegression
+Type: Package
+Title: Harmonic Regression to One or more Time Series
+Version: 1.99999
+Date: 2021-03-23
+Author: Pål O. Westermark
+Maintainer: Pål O. Westermark <westermark@fbn-dummerstorf.de>
+Description: Fits the first harmonics in a Fourier expansion to one or more time
+    series. Nuisance variables are supported. Computed values include estimates of
+    amplitudes and phases, as well as confidence intervals and p-values for the null
+    hypothesis independent identically distributed noise.
+License: MIT + file LICENSE
+Encoding: UTF-8
+VignetteBuilder: knitr
+Suggests:
+    knitr,
+    testthat,
+    rmarkdown,
+    Hmisc,
+    qvalue
+Imports:
+    Rfit (>= 0.23.0),
+Depends:
+    R (>= 2.10)
+RoxygenNote: 7.2.1

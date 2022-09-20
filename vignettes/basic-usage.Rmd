@@ -1,0 +1,65 @@
+---
+title: "Basic usage of the HarmonicRegression package"
+author: "Pål O. Westermark"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Basic usage of the HarmonicRegression package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	collapse = TRUE,
+	comment = "#>"
+)
+```
+
+
+## Example data generation
+
+This is a first minimal introduction to the usage of this package.  First, we generate some test data:
+
+```{r Data generation}
+
+times <- seq(0, 46, 2)
+
+means <- 1:10
+rel_amplitudes <- (0:9)/10
+amplitudes <- means*rel_amplitudes
+
+## noise with standard deviation 1/5 of the means
+set.seed(1234)
+noise <- matrix(rnorm(length(times)*10, 
+                      sd = rep(means/5, each = length(times))), ncol = 10)
+base_data <- sweep(noise, 2, means, "+")
+
+rhythms <- sweep(matrix(rep(cos(times*pi/12), 10), ncol = 10), 
+                 2, amplitudes, "*")
+
+rhythm_data <- base_data + rhythms
+
+```
+
+## Harmonic regression
+
+These synthetic data are now easily analyzed:
+
+```{r Harmonic regression analysis}
+
+hreg <- HarmonicRegression::harmonic.regression(rhythm_data, times)
+
+Hmisc::errbar(rel_amplitudes, hreg$pars$amp,
+              yplus = hreg$pars$amp + hreg$ci$amp,
+              yminus = hreg$pars$amp - hreg$ci$amp, 
+              asp = 1)
+abline(0, 1)
+
+knitr::kable(data.frame("p values" = hreg$pvals,
+                        "p values SON" = hreg$pvals_son),
+             row.names = FALSE)
+
+```
+
