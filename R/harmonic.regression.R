@@ -1764,8 +1764,8 @@ log2_amp_to_relamp <- function (log_amp) {
 #' nasc_t <- seq(0, 44, 4)
 #' plot(nasc_t, rna_nasc["Arntl", -1], type = "b")
 #' @name rna_nasc
-NULL
-# "rna_nasc"
+"rna_nasc"
+#NULL
 
 
 #' Menet et al. RNA-Seq Data
@@ -1792,8 +1792,8 @@ NULL
 #' polya_t <- seq(2, 46, 4)
 #' plot(polya_t, rna_polya["Arntl", -1], type = "b")
 #' @name rna_polya
-NULL
-# "rna_polya"
+"rna_polya"
+#NULL
 
 
 

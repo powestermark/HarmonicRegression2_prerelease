@@ -12,6 +12,7 @@ Description: Fits the first harmonics in a Fourier expansion to one or more time
 License: MIT + file LICENSE
 Encoding: UTF-8
 VignetteBuilder: knitr
+LazyData: true
 Suggests:
     knitr,
     testthat,
