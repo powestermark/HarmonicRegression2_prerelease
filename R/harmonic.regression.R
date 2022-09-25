@@ -88,7 +88,7 @@ noncentral_chisq_test <- function (x2, deg_f, X, a_over_sigma) {
   ## p value according to noncentral F distribution
   ## see Hettmansperger & McKean (2011) page 203 for factor 3/pi
   delsq <- a_over_sigma^2*mineig*3/pi
-  pchisq(x2, df = deg_f, ncp = delsq)
+  stats::pchisq(x2, df = deg_f, ncp = delsq)
   
 }
 
