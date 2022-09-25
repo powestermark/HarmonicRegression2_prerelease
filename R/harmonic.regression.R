@@ -101,9 +101,9 @@ normalize_ts_matrix <- function (inputts, inputtime,
       stop(paste("Normalization polynomial degree too high for the number",
                  "of time points"))
     }
-    trendfit <- lm(inputts ~ poly(inputtime, norm.pol.degree, raw = TRUE))
-    trend.ts <- fitted(trendfit)
-    trend.coef <- coef(trendfit)
+    trendfit <- stats::lm(inputts ~ poly(inputtime, norm.pol.degree, raw = TRUE))
+    trend.ts <- stats::fitted(trendfit)
+    trend.coef <- stats::coef(trendfit)
     if(any(zapsmall(trend.ts) == 0)) {
       stop(paste("Normalization using polynomial failed (zero-crossing);", 
                  "try other normalization settings"))
@@ -134,8 +134,8 @@ harmonic_regression_matrix <- function (inputts, inputtime, Tau,
   }
   
   ## matrix fit of the unrestricted model (harmonic regression)
-  inputts.fit <- lm(inputts ~ 1 + cos(2*pi/Tau*inputtime) + 
-                      sin(2*pi/Tau*inputtime), x = TRUE)
+  inputts.fit <- stats::lm(inputts ~ 1 + cos(2*pi/Tau*inputtime) + 
+                             sin(2*pi/Tau*inputtime), x = TRUE)
   
   ## covariance matrix of independent variables
   ssx <- zapsmall(crossprod(inputts.fit$x))
@@ -149,10 +149,10 @@ harmonic_regression_matrix <- function (inputts, inputtime, Tau,
   }
   
   ## fitted values, possibly coerce to matrix
-  fit.vals <- as.matrix(fitted(inputts.fit))
+  fit.vals <- as.matrix(stats::fitted(inputts.fit))
   
   ## coefficients, amplitudes, phases
-  coeffs <- t(coef(inputts.fit))
+  coeffs <- t(stats::coef(inputts.fit))
   pars <- as.data.frame(calculate_amp_phi(coeffs[, 2], coeffs[, 3]))
   if (!any(duplicated(colnames(inputts)))) {
     rownames(pars) <- colnames(inputts)
@@ -325,10 +325,10 @@ normalize_one_ts <- function (inputts, inputtime,
                   norm.w  = rep(NA, 1 + norm.pol.degree),
                   norm.vals = rep(NA, length(inputtime))))
     }
-    trendfit <- lm(inputts ~ poly(inputtime, norm.pol.degree, raw = TRUE),
-                   na.action = na.exclude)
-    trend.ts <- fitted(trendfit)
-    trend.coef <- coef(trendfit)
+    trendfit <- stats::lm(inputts ~ poly(inputtime, norm.pol.degree, raw = TRUE),
+                          na.action = na.exclude)
+    trend.ts <- stats::fitted(trendfit)
+    trend.coef <- stats::coef(trendfit)
     if(any(zapsmall(trend.ts) == 0, na.rm = TRUE)) {
       warning(paste("Zero-crossing of normalization polynomial.", 
                     "One of the time series is left out the fitting procedure"))
@@ -375,11 +375,11 @@ normalize_one_ts_r_pol <- function (inputts, inputtime, norm.pol.degree,
   }
   if (n.non.na < length(inputts)) {
     trend.ts <- rep(NA, length(inputts))
-    trend.ts[!is.na(inputts)] <- fitted(trendfit)
+    trend.ts[!is.na(inputts)] <- stats::fitted(trendfit)
   } else {
-    trend.ts <- fitted(trendfit)
+    trend.ts <- stats::fitted(trendfit)
   }
-  trend.coef <- coef(trendfit)
+  trend.coef <- stats::coef(trendfit)
   if(any(zapsmall(trend.ts) == 0, na.rm = TRUE)) {
     warning(paste("Zero-crossing of normalization polynomial.", 
                   "One of the time series is left out the fitting procedure"))
@@ -408,9 +408,9 @@ fit_one_harmonic <- function (inputts, inputtime, Tau, a_over_sigma) {
                 pval_son = NA))
   }
   ## harmonic regression
-  inputts.fit <- lm(inputts ~ (1 + cos(2*pi/Tau*inputtime) + 
-                                 sin(2*pi/Tau*inputtime)),
-                    na.action = na.exclude, x = TRUE) 
+  inputts.fit <- stats::lm(inputts ~ (1 + cos(2*pi/Tau*inputtime) + 
+                                        sin(2*pi/Tau*inputtime)),
+                           na.action = na.exclude, x = TRUE) 
   
   ## refrain from parameter estimation if the design matrix is bad
   ssx <- zapsmall(crossprod(inputts.fit$x))
@@ -426,9 +426,9 @@ fit_one_harmonic <- function (inputts, inputtime, Tau, a_over_sigma) {
                 pval_son = NA))
   }
   
-  fit.vals <- fitted(inputts.fit)
+  fit.vals <- stats::fitted(inputts.fit)
   
-  coeffs <- coef(inputts.fit)
+  coeffs <- stats::coef(inputts.fit)
   pars <- calculate_amp_phi(coeffs[2], coeffs[3])
   
   if (n.non.na == 3) {
@@ -526,10 +526,10 @@ fit_one_harmonic_nuisance <- function (inputts, inputtime, Tau,
                 pval_son = NA))
   }
   
-  fit.vals <- fitted(unrest.fit)
+  fit.vals <- stats::fitted(unrest.fit)
   
   ## coefficients, amplitudes, phases
-  coeffs <- coef(unrest.fit)
+  coeffs <- stats::coef(unrest.fit)
   pars <- calculate_amp_phi(coeffs[2], coeffs[3])
   
   if (deg_f == 0) {
@@ -632,13 +632,13 @@ fit_one_harmonic_r <- function (inputts, inputtime, Tau, normalize = FALSE,
   ## although na.exclude() is used
   if (n.non.na < length(inputts)) {
     fit.vals <- rep(NA, length(inputts))
-    fit.vals[!is.na(inputts)] <- fitted(inputts.fit)
+    fit.vals[!is.na(inputts)] <- stats::fitted(inputts.fit)
   } else {
-    fit.vals <- fitted(inputts.fit)
+    fit.vals <- stats::fitted(inputts.fit)
   }
   
   
-  coeffs <- coef(inputts.fit)
+  coeffs <- stats::coef(inputts.fit)
   pars <- calculate_amp_phi(coeffs[2], coeffs[3])
   
   ## compute robust mean by averaging over the design matrix 
