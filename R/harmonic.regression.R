@@ -683,9 +683,16 @@ fit_one_harmonic_r <- function (inputts, inputtime, Tau, normalize = FALSE,
       #               pval_son = NA))
     } else {
       pval <- as.numeric(rfit_summary$droppval)
-      # NOTE: summary.rfit returns F statistic, i.e. with reduction in 
-      # dispersion in numerator being divided by additional 2 degrees of 
-      # freedom. Therefore multiply by 2 to get the chi-square statistic
+      # NOTE: summary.rfit calls drop.test, which returns F statistic, i.e. with
+      # reduction in dispersion in numerator being divided by additional 2
+      # degrees of freedom. Therefore multiply by 2 to get the chi-square
+      # statistic. See, e.g., Hettmansperger and McKean p. 194:
+      # "it follows that the right side of (3.6.10) converges in distribution to 
+      # a χ2 random variable with q degrees of freedom, which completes the proof 
+      # of the [...]"
+      # "Although the test statistic qFφ has an asymptotic χ2 distribution [...]"
+      # See Rfit::drop.test():
+      #   test <- (rd/df1)/(fitF$tauhat/2)
       df_ssq_red <- length(inputts.fit$coefficients) - 1
       pval_son <- 
         noncentral_chisq_test(as.numeric(rfit_summary$dropstat)*df_ssq_red, 
