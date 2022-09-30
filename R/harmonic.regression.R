@@ -229,9 +229,12 @@ harmonic_regression_matrix_nuisance <- function (inputts, inputtime, Tau,
                                                  nuisance_f,
                                                  a_over_sigma) {
   
-  ## "move" the formula to a new formula with local environment
-  nuisance_f_local <- stats::formula(deparse(nuisance_f))
-  parent.env(environment(nuisance_f_local)) <- environment(nuisance_f)
+  # switch the nuisance formula environment to a new environment with this
+  # local function's environment as parent, to get both the nuisance variables
+  # and this function's local variables (inoutts, inputtime, ...) available
+  # to models
+  new_env <- list2env(as.list(environment(nuisance_f), all.names = TRUE))
+  environment(nuisance_f) <- new_env
   
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
   ## check for enough degrees of freedom
@@ -242,7 +245,7 @@ harmonic_regression_matrix_nuisance <- function (inputts, inputtime, Tau,
   }
   
   ## matrix fit of the restricted model (polynomial)
-  rest.fit <- stats::lm(stats::update(nuisance_f_local, inputts ~ .))
+  rest.fit <- stats::lm(stats::update(nuisance_f, inputts ~ .))
   
   ## matrix fit of the unrestricted model (harmonic regression)
   unrest.fit <- stats::update(rest.fit, . ~ 
@@ -484,8 +487,12 @@ fit_one_harmonic <- function (inputts, inputtime, Tau, a_over_sigma) {
 fit_one_harmonic_nuisance <- function (inputts, inputtime, Tau,
                                        nuisance_f, a_over_sigma) {
   
-  nuisance_f_local <- stats::formula(deparse(nuisance_f))
-  parent.env(environment(nuisance_f_local)) <- environment(nuisance_f)
+  # switch the nuisance formula environment to a new environment with this
+  # local function's environment as parent, to get both the nuisance variables
+  # and this function's local variables (inoutts, inputtime, ...) available
+  # to models
+  new_env <- list2env(as.list(environment(nuisance_f), all.names = TRUE))
+  environment(nuisance_f) <- new_env
   
   n.non.na <- length(which(!is.na(inputts)))
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
@@ -503,7 +510,7 @@ fit_one_harmonic_nuisance <- function (inputts, inputtime, Tau,
   }
   
   ## fit of the restricted model (nuisance_f)
-  rest.fit <- stats::lm(stats::update(nuisance_f_local, inputts ~ .), 
+  rest.fit <- stats::lm(stats::update(nuisance_f, inputts ~ .), 
                         na.action = na.exclude)
   
   ## matrix fit of the unrestricted model (harmonic regression)
@@ -748,8 +755,15 @@ fit_one_harmonic_nuisance_r <- function (inputts, inputtime, Tau,
                                          nuisance_f, normalize = FALSE, 
                                          a_over_sigma, robust_scores) {
   
-  nuisance_f_local <- stats::formula(deparse(nuisance_f))
-  parent.env(environment(nuisance_f_local)) <- environment(nuisance_f)
+  # switch the nuisance formula environment to a new environment with this
+  # local function's environment as parent, to get both the nuisance variables
+  # and this function's local variables (inoutts, inputtime, ...) available
+  # to models
+  new_env <- list2env(as.list(environment(nuisance_f), all.names = TRUE))
+  environment(nuisance_f) <- new_env
+  
+  # nuisance_f_local <- stats::formula(deparse(nuisance_f))
+  # parent.env(environment(nuisance_f_local)) <- environment(nuisance_f)
   
   n.non.na <- length(which(!is.na(inputts)))
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
@@ -768,7 +782,8 @@ fit_one_harmonic_nuisance_r <- function (inputts, inputtime, Tau,
   }
   
   ## fit of the restricted model (nuisance_f)
-  rest_f <- stats::update(nuisance_f_local, inputts ~ .)
+  # rest_f <- stats::update(nuisance_f_local, inputts ~ .)
+  rest_f <- stats::update(nuisance_f, inputts ~ .)
   rest.fit <- try(
     Rfit::rfit(rest_f, na.action = na.exclude, scores = robust_scores), 
     silent = TRUE
