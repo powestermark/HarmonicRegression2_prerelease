@@ -1,10 +1,10 @@
-calculate_amp_phi <- function (a_cos, b_sin) {
+calculate_amp_phi <- function(a_cos, b_sin) {
   amp <- unname(sqrt(a_cos^2 + b_sin^2))
   phi <- unname(atan2(b_sin, a_cos) %% (2*pi))
   cbind(amp = amp, phi = phi)
 }
 
-calculate_ci_amp_phi <- function (amp, a_cos, b_sin, fit_res_ssr, R, deg_f) {
+calculate_ci_amp_phi <- function(amp, a_cos, b_sin, fit_res_ssr, R, deg_f) {
   # if (det(ssx) == 0 | kappa(ssx) > 0.5/.Machine$double.eps)
   #   return(cbind(amp = NA, phi = NA))
   ## manually compute variance-covariance matrix (faster here than vcov())
@@ -19,8 +19,8 @@ calculate_ci_amp_phi <- function (amp, a_cos, b_sin, fit_res_ssr, R, deg_f) {
               ifelse(amp > 0, a_cos/amp^2, 0))
   ## dimension of non-matrix vector x will automatically be adjusted by R
   ## to conform with matrix multiplication, see ?matmult
-  var_a <- apply(Ja, 1, function (x) x %*% ssxinvab %*% x) * fit_res_ssr/deg_f
-  var_p <- apply(Jp, 1, function (x) x %*% ssxinvab %*% x) * fit_res_ssr/deg_f
+  var_a <- apply(Ja, 1, function(x) x %*% ssxinvab %*% x) * fit_res_ssr/deg_f
+  var_p <- apply(Jp, 1, function(x) x %*% ssxinvab %*% x) * fit_res_ssr/deg_f
   ##ciquant <- qnorm(0.025, lower.tail = FALSE)
   ciquant <- 2
   ci_amp <- sqrt(as.numeric(var_a))*ciquant
@@ -30,7 +30,7 @@ calculate_ci_amp_phi <- function (amp, a_cos, b_sin, fit_res_ssr, R, deg_f) {
   
 }
 
-calculate_ci_amp_phi_r <- function (amp, a_cos, b_sin, ssx, thefit) {
+calculate_ci_amp_phi_r <- function(amp, a_cos, b_sin, ssx, thefit) {
   # if (det(ssx) == 0 | kappa(ssx) > 0.5/.Machine$double.eps)
   #   return(cbind(amp = NA, phi = NA))
   vcovmat <- vcov(thefit)[2:3, 2:3]
@@ -49,7 +49,7 @@ calculate_ci_amp_phi_r <- function (amp, a_cos, b_sin, ssx, thefit) {
   
 }
 
-noncentral_f_test <- function (Fval, deg_f1, deg_f2, X, a_over_sigma) {
+noncentral_f_test <- function(Fval, deg_f1, deg_f2, X, a_over_sigma) {
   # where X is the N x 3 design matrix.
   X1 <- X[, -(2:3), drop = FALSE]
   ## model matrix harmonics
@@ -73,7 +73,7 @@ noncentral_f_test <- function (Fval, deg_f1, deg_f2, X, a_over_sigma) {
   
 }
 
-noncentral_chisq_test <- function (x2, deg_f, X, a_over_sigma) {
+noncentral_chisq_test <- function(x2, deg_f, X, a_over_sigma) {
   # where X is the N x 3 design matrix.
   X1 <- X[, -(2:3), drop = FALSE]
   ## model matrix harmonics
@@ -94,8 +94,8 @@ noncentral_chisq_test <- function (x2, deg_f, X, a_over_sigma) {
 
 
 # normalize time series matrix (no NAs) -----------------------------------
-normalize_ts_matrix <- function (inputts, inputtime, 
-                                 norm.pol, norm.pol.degree) {
+normalize_ts_matrix <- function(inputts, inputtime, 
+                                norm.pol, norm.pol.degree) {
   if (norm.pol) {
     if (length(inputtime) < (1 + norm.pol.degree)) {
       stop(paste("Normalization polynomial degree too high for the number",
@@ -124,8 +124,8 @@ normalize_ts_matrix <- function (inputts, inputtime,
 
 
 # harmonic regression matrix (no NAs) -------------------------------------
-harmonic_regression_matrix <- function (inputts, inputtime, Tau,
-                                        a_over_sigma) {
+harmonic_regression_matrix <- function(inputts, inputtime, Tau,
+                                       a_over_sigma) {
   
   ## check time series length
   if (length(inputtime) < 3) {
@@ -188,7 +188,7 @@ harmonic_regression_matrix <- function (inputts, inputtime, Tau,
     ## f-statistic and pvalues
     
     fstats <- as.data.frame(t(sapply(inputts.fit.summaries, 
-                                     function (x) x$fstatistic)))
+                                     function(x) x$fstatistic)))
     pvals <- with(fstats, stats::pf(value, numdf, dendf, lower.tail = FALSE))
     names(pvals) <- names(inputts.fit.summaries)
     
@@ -225,9 +225,9 @@ harmonic_regression_matrix <- function (inputts, inputtime, Tau,
 }
 
 
-harmonic_regression_matrix_nuisance <- function (inputts, inputtime, Tau,
-                                                 nuisance_f,
-                                                 a_over_sigma) {
+harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
+                                                nuisance_f,
+                                                a_over_sigma) {
   
   # switch the nuisance formula environment to a new environment with this
   # local function's environment as parent, to get both the nuisance variables
@@ -242,7 +242,7 @@ harmonic_regression_matrix_nuisance <- function (inputts, inputtime, Tau,
   parent.env(new_env) <- environment(nuisance_f)
   # then sets the formula environment as this new environment
   environment(nuisance_f) <- new_env
- 
+  
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
   ## check for enough degrees of freedom
   deg_f <- length(inputtime) - (nuisance_dim + 2)
@@ -326,8 +326,8 @@ harmonic_regression_matrix_nuisance <- function (inputts, inputtime, Tau,
 
 
 # normalize time series vector (with NAs) ---------------------------------
-normalize_one_ts <- function (inputts, inputtime, 
-                              norm.pol, norm.pol.degree) {
+normalize_one_ts <- function(inputts, inputtime, 
+                             norm.pol, norm.pol.degree) {
   n.non.na <- length(which(!is.na(inputts)))
   if (norm.pol) {
     if (n.non.na < (1 + norm.pol.degree)) {
@@ -364,8 +364,8 @@ normalize_one_ts <- function (inputts, inputtime,
 
 ## this is only for the case that multiplicative normalization is done for 
 ## polynomials.  "mean" normalization is done as part of the main robust fit.
-normalize_one_ts_r_pol <- function (inputts, inputtime, norm.pol.degree,
-                                    robust_scores) {
+normalize_one_ts_r_pol <- function(inputts, inputtime, norm.pol.degree,
+                                   robust_scores) {
   n.non.na <- length(which(!is.na(inputts)))
   if (n.non.na < (1 + norm.pol.degree)) {
     return(list(norm.ts = rep(NA, length(inputtime)), 
@@ -404,7 +404,7 @@ normalize_one_ts_r_pol <- function (inputts, inputtime, norm.pol.degree,
 
 
 # harmonic regression one time series (with NAs) --------------------------
-fit_one_harmonic <- function (inputts, inputtime, Tau, a_over_sigma) {
+fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
   
   n.non.na <- length(which(!is.na(inputts)))
   if (n.non.na < 3) {
@@ -491,8 +491,8 @@ fit_one_harmonic <- function (inputts, inputtime, Tau, a_over_sigma) {
 }
 
 
-fit_one_harmonic_nuisance <- function (inputts, inputtime, Tau,
-                                       nuisance_f, a_over_sigma) {
+fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
+                                      nuisance_f, a_over_sigma) {
   
   # switch the nuisance formula environment to a new environment with this
   # local function's environment as parent, to get both the nuisance variables
@@ -595,8 +595,8 @@ fit_one_harmonic_nuisance <- function (inputts, inputtime, Tau,
 
 
 # robust harmonic regression one time series (with NAs) -------------------
-fit_one_harmonic_r <- function (inputts, inputtime, Tau, normalize = FALSE,
-                                a_over_sigma, robust_scores) {
+fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
+                               a_over_sigma, robust_scores) {
   
   n.non.na <- length(which(!is.na(inputts)))
   if (n.non.na < 3) {
@@ -709,9 +709,10 @@ fit_one_harmonic_r <- function (inputts, inputtime, Tau, normalize = FALSE,
       # degrees of freedom. Therefore multiply by 2 to get the chi-square
       # statistic. See, e.g., Hettmansperger and McKean p. 194:
       # "it follows that the right side of (3.6.10) converges in distribution to 
-      # a χ2 random variable with q degrees of freedom, which completes the proof 
-      # of the [...]"
-      # "Although the test statistic qFφ has an asymptotic χ2 distribution [...]"
+      # a χ2 random variable with q degrees of freedom, which completes the 
+      # proof of the [...]"
+      # "Although the test statistic qFφ has an asymptotic χ2 distribution 
+      # [...]"
       # See Rfit::drop.test():
       #   test <- (rd/df1)/(fitF$tauhat/2)
       df_ssq_red <- length(inputts.fit$coefficients) - 1
@@ -765,9 +766,9 @@ fit_one_harmonic_r <- function (inputts, inputtime, Tau, normalize = FALSE,
 }
 
 
-fit_one_harmonic_nuisance_r <- function (inputts, inputtime, Tau,
-                                         nuisance_f, normalize = FALSE, 
-                                         a_over_sigma, robust_scores) {
+fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
+                                        nuisance_f, normalize = FALSE, 
+                                        a_over_sigma, robust_scores) {
   
   # switch the nuisance formula environment to a new environment with this
   # local function's environment as parent, to get both the nuisance variables
@@ -952,10 +953,10 @@ fit_one_harmonic_nuisance_r <- function (inputts, inputtime, Tau,
 
 
 # harmonic regression one time series at a time, with NAs -----------------
-harmonic_regression_nas <- function (inputts, inputtime, Tau, robust = FALSE,
-                                     normalize = FALSE, 
-                                     a_over_sigma,
-                                     n_cores, robust_scores = robust_scores) {
+harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
+                                    normalize = FALSE, 
+                                    a_over_sigma,
+                                    n_cores, robust_scores = robust_scores) {
   
   if (length(inputtime) < 3) {
     stop(paste("These time series are too short for a meaningful analysis.",
@@ -1027,11 +1028,11 @@ harmonic_regression_nas <- function (inputts, inputtime, Tau, robust = FALSE,
 }
 
 
-harmonic_regression_nas_nuisance <- function (inputts, inputtime, Tau,
-                                              nuisance_f, robust = FALSE,
-                                              normalize = FALSE, a_over_sigma,
-                                              n_cores, robust_scores =
-                                                robust_scores) {
+harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
+                                             nuisance_f, robust = FALSE,
+                                             normalize = FALSE, a_over_sigma,
+                                             n_cores, robust_scores =
+                                               robust_scores) {
   
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
   ## check for enough degrees of freedom
@@ -1286,13 +1287,13 @@ harmonic_regression_nas_nuisance <- function (inputts, inputtime, Tau,
 
 
 # harmonic regression main function ---------------------------------------
-harmonic_regression <- function (inputts, inputtime, Tau = 24,
-                                 normalize = TRUE, norm.pol = FALSE, 
-                                 norm.pol.degree = 1,
-                                 nuisance_f = NULL, robust = FALSE,
-                                 a_over_sigma = 1,
-                                 n_cores = 1L,
-                                 robust_scores = Rfit::wscores) {
+harmonic_regression <- function(inputts, inputtime, Tau = 24,
+                                normalize = TRUE, norm.pol = FALSE, 
+                                norm.pol.degree = 1,
+                                nuisance_f = NULL, robust = FALSE,
+                                a_over_sigma = 1,
+                                n_cores = 1L,
+                                robust_scores = Rfit::wscores) {
   
   ## check that input data come as numerics
   if (!is.numeric(inputts) || !is.numeric(inputtime)) {
@@ -1451,8 +1452,8 @@ harmonic_regression <- function (inputts, inputtime, Tau = 24,
       if (normalize) {
         # if (n_cores == 1L || !requireNamespace("future.apply", 
         #                                        quietly = TRUE)) {
-          norm.ts.list <- apply(inputts, 2, normalize_one_ts,
-                                inputtime, norm.pol, norm.pol.degree)
+        norm.ts.list <- apply(inputts, 2, normalize_one_ts,
+                              inputtime, norm.pol, norm.pol.degree)
         # } else {
         #   future::plan(future::multisession,
         #                workers = min(n_cores, future::availableCores()))
@@ -1576,7 +1577,7 @@ harmonic.regression <- harmonic_regression
 
 
 #' @export
-print.hregm <- function (x, fdr = 0.1, amp = 0.15, ...) {
+print.hregm <- function(x, fdr = 0.1, amp = 0.15, ...) {
   
   n_ts <- length(x$pvals)
   cat(paste("\n\tHarmonic regression results for", n_ts, "time series.\n"))
@@ -1610,7 +1611,7 @@ print.hregm <- function (x, fdr = 0.1, amp = 0.15, ...) {
 }
 
 #' @export
-summary.hregm <- function (object, ...) {
+summary.hregm <- function(object, ...) {
   results <- data.frame(
     means = object$means,
     amplitudes = object$pars$amp,
@@ -1626,12 +1627,12 @@ summary.hregm <- function (object, ...) {
 }
 
 #' @export
-coef.hregm <- function (object, ...) {
+coef.hregm <- function(object, ...) {
   object$coeffs
 }
 
 #' @export
-fitted.hregm <- function (object, normalized = FALSE, ...) {
+fitted.hregm <- function(object, normalized = FALSE, ...) {
   if (normalized && length(object) == 13L) {
     object$norm.fit.vals
   } else if (normalized) {
@@ -1644,7 +1645,7 @@ fitted.hregm <- function (object, normalized = FALSE, ...) {
 
 
 
-# deviance.hregm <- function (object, normalized = FALSE) {
+# deviance.hregm <- function(object, normalized = FALSE) {
 #   if (normalized && length(object) == 13L) {
 #     object$ssr
 #   } else if (normalized) {
@@ -1659,8 +1660,8 @@ fitted.hregm <- function (object, normalized = FALSE, ...) {
 
 
 
-redistribute_pvals <- function (pvals, breakpoint = 0.9, next_breakpoint = 0.8,
-                                ref_low = 0.6, ref_high = 0.7) {
+redistribute_pvals <- function(pvals, breakpoint = 0.9, next_breakpoint = 0.8,
+                               ref_low = 0.6, ref_high = 0.7) {
   candidate_ind <- which(pvals > breakpoint)
   ## compute predicted number of p values in the interval 
   ## 1 >= p > breakpoint, based on the interval
@@ -1728,9 +1729,9 @@ redistribute_pvals <- function (pvals, breakpoint = 0.9, next_breakpoint = 0.8,
 #' pvals <- c(stats::rbeta(1000, 0.5, 5), stats::rbeta(300, 5, 0.5))
 #' hist(pvals)
 #' hist(regularize_pvals(pvals))
-regularize_pvals <- function (pvals, breakpoints = c(0.99, 0.98, 0.9, 0.8),
-                              ref_low = 0.6, ref_high = 0.7,
-                              suppress_message = FALSE) {
+regularize_pvals <- function(pvals, breakpoints = c(0.99, 0.98, 0.9, 0.8),
+                             ref_low = 0.6, ref_high = 0.7,
+                             suppress_message = FALSE) {
   if (!suppress_message) {
     message(paste("Regularized (pseudo) p values must only be used for",
                   "estimating the size of the non-null (H1) population, e.g.,",
@@ -1773,7 +1774,7 @@ regularize_pvals <- function (pvals, breakpoints = c(0.99, 0.98, 0.9, 0.8),
 #'
 #' @examples
 #' log2_amp_to_relamp(c(1, 2))
-log2_amp_to_relamp <- function (log_amp) {
+log2_amp_to_relamp <- function(log_amp) {
   (2^(2*log_amp) - 1)/(2^(2*log_amp) + 1)
 }
 
