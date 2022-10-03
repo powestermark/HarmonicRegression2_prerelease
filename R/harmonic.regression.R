@@ -600,15 +600,18 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
   
   n.non.na <- length(which(!is.na(inputts)))
   if (n.non.na < 3) {
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA,
-                ssx = NA,
-                pval = NA,
-                # pval_son_null_weak = NA,
-                pval_son = NA,
-                mean = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA,
+      ssx = NA,
+      pval = NA,
+      # pval_son_null_weak = NA,
+      pval_son = NA,
+      mean = NA,
+      test_stat = NA
+    ))
   }
   
   # inputtime <- times
@@ -619,18 +622,21 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
                                              sin(2*pi/Tau*inputtime)),
                                 na.action = na.exclude,
                                 scores = robust_scores), silent = TRUE)
-  if (inherits(inputts.fit, "try-error")) {
+  if (isa(inputts.fit, "try-error")) {
     warning(paste("Robust fitting procedure failed in one case. NAs", 
                   "are reported for this case."))
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA,
-                ssx = NA,
-                pval = NA,
-                # pval_son_null_weak = NA,
-                pval_son = NA,
-                mean = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA,
+      ssx = NA,
+      pval = NA,
+      # pval_son_null_weak = NA,
+      pval_son = NA,
+      mean = NA,
+      test_stat = NA
+    ))
   }
   
   
@@ -638,15 +644,18 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
   ssx <- zapsmall(crossprod(inputts.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA,
-                ssx = NA,
-                pval = NA,
-                # pval_son_null_weak = NA,
-                pval_son = NA,
-                mean = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA,
+      ssx = NA,
+      pval = NA,
+      # pval_son_null_weak = NA,
+      pval_son = NA,
+      mean = NA,
+      test_stat = NA
+    ))
   }
   
   ## workaround for a bug in rfit(), where NAs are not propagated by fitted() 
@@ -673,6 +682,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     fit.res.ssr <- NA
     sigma_hat <- NA
     pval_son <- NA
+    test_stat <- NA
     # pval_son_null_weak <- NA,
     if (normalize) {
       pars[, "amp"] <- pars[, "amp"]/mean_r
@@ -689,12 +699,13 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     
     
     ## there may be conditions for which summary.rfit() fails
-    if (inherits(rfit_summary, "try-error")) {
+    if (isa(rfit_summary, "try-error")) {
       warning(paste("The robust testing procedure against the null hypothesis", 
                     "did not converge for one",
                     "sample.  NA is reported for this case"))
       pval <- NA
       pval_son <- NA
+      test_stat <- NA
       # pval_son_null_weak <- NA
       
       #   return(list(pars = c(amp = NA, phi = NA),
@@ -728,6 +739,8 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       #                     inputts.fit$x,
       #                     a_over_sigma)
       
+      test_stat <- as.numeric(rfit_summary$dropstat)
+      
     }
     
     ## sum squared residual of the unrestricted model; fitted values
@@ -753,15 +766,19 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     
   }
   
-  list(pars = pars,
-       coeffs = coeffs, ci = ci,
-       mean = mean_r,
-       fit.vals = fit.vals,
-       ssr = unname(fit.res.ssr), deg_f = (n.non.na - 3), 
-       sigma_hat = unname(sigma_hat),
-       ssx = ssx,
-       # pval_son_null_weak = pval_son_null_weak,
-       pval = pval, pval_son = pval_son)
+  list(
+    pars = pars,
+    coeffs = coeffs, ci = ci,
+    mean = mean_r,
+    fit.vals = fit.vals,
+    ssr = unname(fit.res.ssr), deg_f = (n.non.na - 3), 
+    sigma_hat = unname(sigma_hat),
+    ssx = ssx,
+    # pval_son_null_weak = pval_son_null_weak,
+    pval = pval, 
+    pval_son = pval_son,
+    test_stat = test_stat
+  )
   
 }
 
