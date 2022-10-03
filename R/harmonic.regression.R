@@ -233,9 +233,16 @@ harmonic_regression_matrix_nuisance <- function (inputts, inputtime, Tau,
   # local function's environment as parent, to get both the nuisance variables
   # and this function's local variables (inoutts, inputtime, ...) available
   # to models
-  new_env <- list2env(as.list(environment(nuisance_f), all.names = TRUE))
-  environment(nuisance_f) <- new_env
+  # new_env <- list2env(as.list(environment(nuisance_f), all.names = TRUE))
+  # environment(nuisance_f) <- new_env
   
+  # copy of local function environment
+  new_env <- as.environment(as.list(environment(), all.names = TRUE))
+  # then puts the formula environment as its parent
+  parent.env(new_env) <- environment(nuisance_f)
+  # then sets the formula environment as this new environment
+  environment(nuisance_f) <- new_env
+ 
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
   ## check for enough degrees of freedom
   deg_f <- length(inputtime) - (nuisance_dim + 2)
@@ -491,7 +498,14 @@ fit_one_harmonic_nuisance <- function (inputts, inputtime, Tau,
   # local function's environment as parent, to get both the nuisance variables
   # and this function's local variables (inoutts, inputtime, ...) available
   # to models
-  new_env <- list2env(as.list(environment(nuisance_f), all.names = TRUE))
+  # new_env <- list2env(as.list(environment(nuisance_f), all.names = TRUE))
+  # environment(nuisance_f) <- new_env
+  
+  # maybe a better version? copy of local function environment
+  new_env <- as.environment(as.list(environment(), all.names = TRUE))
+  # then puts the formula environment as its parent
+  parent.env(new_env) <- environment(nuisance_f)
+  # then sets the formula environment as this new environment
   environment(nuisance_f) <- new_env
   
   n.non.na <- length(which(!is.na(inputts)))
@@ -759,7 +773,14 @@ fit_one_harmonic_nuisance_r <- function (inputts, inputtime, Tau,
   # local function's environment as parent, to get both the nuisance variables
   # and this function's local variables (inoutts, inputtime, ...) available
   # to models
-  new_env <- list2env(as.list(environment(nuisance_f), all.names = TRUE))
+  # new_env <- list2env(as.list(environment(nuisance_f), all.names = TRUE))
+  # environment(nuisance_f) <- new_env
+  
+  # maybe a better version? copy of local function environment
+  new_env <- as.environment(as.list(environment(), all.names = TRUE))
+  # then puts the formula environment as its parent
+  parent.env(new_env) <- environment(nuisance_f)
+  # then sets the formula environment as this new environment
   environment(nuisance_f) <- new_env
   
   # nuisance_f_local <- stats::formula(deparse(nuisance_f))
