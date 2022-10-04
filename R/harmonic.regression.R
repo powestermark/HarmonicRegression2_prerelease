@@ -23,8 +23,8 @@ calculate_ci_amp_phi <- function(amp, a_cos, b_sin, fit_res_ssr, R, deg_f) {
   var_p <- apply(Jp, 1, function(x) x %*% ssxinvab %*% x) * fit_res_ssr/deg_f
   ##ciquant <- qnorm(0.025, lower.tail = FALSE)
   ciquant <- 2
-  ci_amp <- sqrt(as.numeric(var_a))*ciquant
-  ci_phi <- sqrt(as.numeric(var_p))*ciquant
+  ci_amp <- sqrt(drop(var_a))*ciquant
+  ci_phi <- sqrt(drop(var_p))*ciquant
   
   cbind(amp = ci_amp, phi = ifelse(ci_phi < pi, ci_phi, pi))
   
@@ -42,8 +42,8 @@ calculate_ci_amp_phi_r <- function(amp, a_cos, b_sin, ssx, thefit) {
   var_p <- Jp %*% vcovmat %*% t(Jp)
   ##ciquant <- qnorm(0.025, lower.tail = FALSE)
   ciquant <- 2
-  ci_amp <- sqrt(as.numeric(var_a))*ciquant
-  ci_phi <- sqrt(as.numeric(var_p))*ciquant
+  ci_amp <- sqrt(drop(var_a))*ciquant
+  ci_phi <- sqrt(drop(var_p))*ciquant
   
   cbind(amp = ci_amp, phi = ifelse(ci_phi < pi, ci_phi, pi))
   
@@ -673,7 +673,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
   
   ## compute robust mean by averaging over the design matrix 
   ## (see for instance Davison pp. 383--384)
-  mean_r <- as.numeric(crossprod(coeffs, colMeans(inputts.fit$x)))
+  mean_r <- drop(crossprod(coeffs, colMeans(inputts.fit$x)))
   
   if (n.non.na == 3) {
     
@@ -714,7 +714,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       #               ssr = NA, deg_f = NA, pval = NA,
       #               pval_son = NA))
     } else {
-      pval <- as.numeric(rfit_summary$droppval)
+      pval <- drop(rfit_summary$droppval)
       # NOTE: summary.rfit calls drop.test, which returns F statistic, i.e. with
       # reduction in dispersion in numerator being divided by additional 2
       # degrees of freedom. Therefore multiply by 2 to get the chi-square
@@ -728,18 +728,18 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       #   test <- (rd/df1)/(fitF$tauhat/2)
       df_ssq_red <- length(inputts.fit$coefficients) - 1
       pval_son <- 
-        noncentral_chisq_test(as.numeric(rfit_summary$dropstat)*df_ssq_red, 
+        noncentral_chisq_test(drop(rfit_summary$dropstat)*df_ssq_red, 
                               df_ssq_red,
                               inputts.fit$x,
                               a_over_sigma)
       # pval_son_null_weak <- 1 - 
-      #   noncentral_f_test(as.numeric(rfit_summary$dropstat), 
+      #   noncentral_f_test(drop(rfit_summary$dropstat), 
       #                     df_ssq_red,
       #                     length(inputts.fit$y) - inputts.fit$qrx1$rank,
       #                     inputts.fit$x,
       #                     a_over_sigma)
       
-      test_stat <- as.numeric(rfit_summary$dropstat)
+      test_stat <- drop(rfit_summary$dropstat)
       
     }
     
@@ -880,7 +880,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
   
   ## compute robust mean with by averaging over the design matrix 
   ## (see for instance Davison pp. 383--384)
-  mean_r <- as.numeric(crossprod(coeffs, colMeans(unrest.fit$x)))
+  mean_r <- drop(crossprod(coeffs, colMeans(unrest.fit$x)))
   
   if (deg_f == 0) {
     
@@ -922,14 +922,14 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
       #               ssr = NA, deg_f = NA, pval = NA,
       #               pval_son = NA))
     } else {
-      pval <- as.numeric(rfit_testresult$p.value)
+      pval <- drop(rfit_testresult$p.value)
       pval_son <- 
-        noncentral_chisq_test(as.numeric(rfit_testresult$F)*rfit_testresult$df1, 
+        noncentral_chisq_test(drop(rfit_testresult$F)*rfit_testresult$df1, 
                               rfit_testresult$df1,
                               unrest.fit$x,
                               a_over_sigma)
       # pval_son_null_weak <- 1 - 
-      #   noncentral_f_test(as.numeric(rfit_testresult$F), 
+      #   noncentral_f_test(drop(rfit_testresult$F), 
       #                     rfit_testresult$df1,
       #                     rfit_testresult$df2,
       #                     unrest.fit$x,
