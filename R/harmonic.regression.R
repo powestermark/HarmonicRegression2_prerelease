@@ -739,6 +739,8 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       #                     inputts.fit$x,
       #                     a_over_sigma)
       
+      # NOTE: summary.rfit() calls drop.test() and assigns its list element "F"
+      # to "dropstat" 
       test_stat <- drop(rfit_summary$dropstat)
       
     }
@@ -768,10 +770,12 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
   
   list(
     pars = pars,
-    coeffs = coeffs, ci = ci,
+    coeffs = coeffs, 
+    ci = ci,
     mean = mean_r,
     fit.vals = fit.vals,
-    ssr = unname(fit.res.ssr), deg_f = (n.non.na - 3), 
+    ssr = unname(fit.res.ssr), 
+    deg_f = (n.non.na - 3), 
     sigma_hat = unname(sigma_hat),
     ssx = ssx,
     # pval_son_null_weak = pval_son_null_weak,
@@ -809,15 +813,18 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
   ## check for enough degrees of freedom
   deg_f <- n.non.na - (nuisance_dim + 2)
   if (deg_f < 0) {
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA,
-                ssx = NA,
-                pval = NA,
-                # pval_son_null_weak = NA, 
-                pval_son = NA,
-                mean = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
+      mean = NA,
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA,
+      ssx = NA,
+      pval = NA,
+      # pval_son_null_weak = NA, 
+      pval_son = NA,
+      test_stat = NA
+    ))
   }
   
   ## fit of the restricted model (nuisance_f)
@@ -835,33 +842,39 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     Rfit::rfit(unrest_f, na.action = na.exclude, scores = robust_scores), 
     silent = TRUE
   )
-  if (inherits(rest.fit, "try-error") || inherits(unrest.fit, "try-error")) {
+  if (isa(rest.fit, "try-error") || isa(unrest.fit, "try-error")) {
     warning(paste("Robust fitting procedure failed in one case. NAs", 
                   "are reported for this case."))
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA,
-                ssx = NA,
-                pval = NA,
-                # pval_son_null_weak = NA, 
-                pval_son = NA,
-                mean = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
+      mean = NA,
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA,
+      ssx = NA,
+      pval = NA,
+      # pval_son_null_weak = NA, 
+      pval_son = NA,
+      test_stat = NA
+    ))
   }
   
   ## refrain from parameter estimation if the design matrix is bad
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA,
-                ssx = ssx,
-                pval = NA,
-                # pval_son_null_weak = NA, 
-                pval_son = NA,
-                mean = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
+      mean = NA,
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA,
+      ssx = ssx,
+      pval = NA,
+      # pval_son_null_weak = NA, 
+      pval_son = NA,
+      test_stat = NA
+    ))
   }
   
   ## workaround for a bug in rfit(), where NAs are not propagated by fitted() 
@@ -889,6 +902,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     unrest.ssr <- NA
     sigma_hat <- NA
     pval_son <- NA
+    test_stat <- NA
     # pval_son_null_weak <- NA 
     if (normalize) {
       pars[, "amp"] <- pars[, "amp"]/mean_r
@@ -908,12 +922,13 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
                            silent = TRUE)
     
     ## there may be conditions for which rfit() fails
-    if (inherits(rfit_testresult, "try-error")) {
+    if (isa(rfit_testresult, "try-error")) {
       warning(paste("The robust testing procedure against the null hypothesis", 
                     "did not converge for one",
                     "sample.  NA is reported for this case"))
       pval <- NA
       pval_son <- NA
+      test_stat <- NA
       # pval_son_null_weak <- NA 
       
       #   return(list(pars = c(amp = NA, phi = NA),
@@ -928,6 +943,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
                               rfit_testresult$df1,
                               unrest.fit$x,
                               a_over_sigma)
+      test_stat <- drop(rfit_testresult$F)
       # pval_son_null_weak <- 1 - 
       #   noncentral_f_test(drop(rfit_testresult$F), 
       #                     rfit_testresult$df1,
@@ -956,14 +972,21 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     
   }    
   
-  list(pars = pars,
-       coeffs = coeffs, ci = ci,
-       mean = mean_r,
-       fit.vals = fit.vals,
-       ssr = unname(unrest.ssr), deg_f = deg_f, sigma_hat = unname(sigma_hat),
-       ssx = ssx,
-       # pval_son_null_weak = pval_son_null_weak, 
-       pval = pval, pval_son = pval_son)
+  list(
+    pars = pars,
+    coeffs = coeffs, 
+    ci = ci,
+    mean = mean_r,
+    fit.vals = fit.vals,
+    ssr = unname(unrest.ssr), 
+    deg_f = deg_f, 
+    sigma_hat = unname(sigma_hat),
+    ssx = ssx,
+    # pval_son_null_weak = pval_son_null_weak, 
+    pval = pval, 
+    pval_son = pval_son,
+    test_stat = test_stat
+  )
   
 }
 
