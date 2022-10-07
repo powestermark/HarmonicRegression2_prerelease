@@ -456,14 +456,15 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
     
     ## f-statistic and pvalues
     inputts_fstat <- summary(inputts.fit)$fstatistic
+    test_stat <- inputts_fstat["value"]
     pval <- unname(
-      stats::pf(inputts_fstat["value"], 
+      stats::pf(test_stat, 
                 inputts_fstat["numdf"], inputts_fstat["dendf"],
                 lower.tail = FALSE)
     )
     
     pval_son <- 
-      unname(noncentral_f_test(inputts_fstat["value"], 
+      unname(noncentral_f_test(test_stat, 
                                inputts_fstat["numdf"], 
                                inputts_fstat["dendf"], 
                                inputts.fit$x, a_over_sigma))
@@ -603,13 +604,13 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     return(list(
       pars = c(amp = NA, phi = NA),
       coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
+      mean = NA,
       fit.vals = rep(NA, length(inputtime)),
       ssr = NA, deg_f = NA, sigma_hat = NA,
       ssx = NA,
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      mean = NA,
       test_stat = NA
     ))
   }
@@ -628,13 +629,13 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     return(list(
       pars = c(amp = NA, phi = NA),
       coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
+      mean = NA,
       fit.vals = rep(NA, length(inputtime)),
       ssr = NA, deg_f = NA, sigma_hat = NA,
       ssx = NA,
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      mean = NA,
       test_stat = NA
     ))
   }
@@ -647,13 +648,13 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     return(list(
       pars = c(amp = NA, phi = NA),
       coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
+      mean = NA,
       fit.vals = rep(NA, length(inputtime)),
       ssr = NA, deg_f = NA, sigma_hat = NA,
       ssx = NA,
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      mean = NA,
       test_stat = NA
     ))
   }
