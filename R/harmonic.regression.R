@@ -166,6 +166,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     ci <- NA
     fit.res.ssr <- NA
     pvals_son <- NA
+    test_stats <- NA
     # pvals_son_null_weak <- NA
     
   } else {
@@ -190,6 +191,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     fstats <- as.data.frame(t(sapply(inputts.fit.summaries, 
                                      function(x) x$fstatistic)))
     pvals <- with(fstats, stats::pf(value, numdf, dendf, lower.tail = FALSE))
+    test_stats <- fstats$value
     names(pvals) <- names(inputts.fit.summaries)
     
     pvals_son <- 
@@ -214,13 +216,16 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
   deg_f <- length(inputtime) - 3
   
   ## return values
-  list(fit.vals = fit.vals,
-       pars = pars, pvals = pvals, 
-       ci = ci, coeffs = coeffs[, 2:3], 
-       ssr = fit.res.ssr, df = deg_f, sigma_hat = sqrt(fit.res.ssr/deg_f),
-       ssx = ssx,
-       # pvals_son_null_weak = pvals_son_null_weak,
-       pvals_son = pvals_son)
+  list(
+    fit.vals = fit.vals,
+    pars = pars, pvals = pvals, 
+    ci = ci, coeffs = coeffs[, 2:3], 
+    ssr = fit.res.ssr, df = deg_f, sigma_hat = sqrt(fit.res.ssr/deg_f),
+    ssx = ssx,
+    # pvals_son_null_weak = pvals_son_null_weak,
+    pvals_son = pvals_son,
+    test_stats = test_stats
+  )
   
 }
 
@@ -283,6 +288,7 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
     ci <- NA
     unrest.ssr <- NA
     pvals_son <- NA
+    test_stats <- NA
     # pvals_son_null_weak <- NA
     
   } else {
@@ -314,13 +320,16 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
   
   
   ## return values
-  list(fit.vals = fit.vals,
-       pars = pars, pvals = pvals, 
-       ci = ci, coeffs = coeffs, 
-       ssr = unrest.ssr, df = deg_f, sigma_hat = sqrt(unrest.ssr/deg_f), 
-       ssx = ssx,
-       # pvals_son_null_weak = pvals_son_null_weak,
-       pvals_son = pvals_son)
+  list(
+    fit.vals = fit.vals,
+    pars = pars, pvals = pvals, 
+    ci = ci, coeffs = coeffs, 
+    ssr = unrest.ssr, df = deg_f, sigma_hat = sqrt(unrest.ssr/deg_f), 
+    ssx = ssx,
+    # pvals_son_null_weak = pvals_son_null_weak,
+    pvals_son = pvals_son,
+    test_stats = fstats
+  )
   
 }
 
@@ -408,14 +417,17 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
   
   n.non.na <- length(which(!is.na(inputts)))
   if (n.non.na < 3) {
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA, 
-                ssx = NA,
-                pval = NA,
-                # pval_son_null_weak = NA,
-                pval_son = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA, 
+      ssx = NA,
+      pval = NA,
+      # pval_son_null_weak = NA,
+      pval_son = NA,
+      test_stat = NA
+    ))
   }
   ## harmonic regression
   inputts.fit <- stats::lm(inputts ~ (1 + cos(2*pi/Tau*inputtime) + 
@@ -426,14 +438,17 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
   ssx <- zapsmall(crossprod(inputts.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA,
-                ssx = ssx,
-                pval = NA,
-                # pval_son_null_weak = NA,
-                pval_son = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, 3), ci = c(amp = NA, phi = NA),
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA,
+      ssx = ssx,
+      pval = NA,
+      # pval_son_null_weak = NA,
+      pval_son = NA,
+      test_stat = NA
+    ))
   }
   
   fit.vals <- stats::fitted(inputts.fit)
@@ -447,6 +462,7 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
     ci <- c(amp = NA, phi = NA)
     fit.res.ssr <- NA
     pval_son <- NA
+    test_stat <- NA
     # pval_son_null_weak <- NA
     
   } else {
@@ -487,7 +503,9 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
        ssx = ssx,
        pval = pval,
        # pval_son_null_weak <- 1 - pval_son
-       pval_son = pval_son)
+       pval_son = pval_son,
+       test_stat = test_stat
+  )
   
 }
 
@@ -514,14 +532,17 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
   ## check for enough degrees of freedom
   deg_f <- n.non.na - (nuisance_dim + 2)
   if (deg_f < 0) {
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA,
-                ssx = NA,
-                pval = NA,
-                # pval_son_null_weak = NA,
-                pval_son = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA,
+      ssx = NA,
+      pval = NA,
+      # pval_son_null_weak = NA,
+      pval_son = NA,
+      test_stat = NA
+    ))
   }
   
   ## fit of the restricted model (nuisance_f)
@@ -538,14 +559,17 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
-    return(list(pars = c(amp = NA, phi = NA),
-                coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
-                fit.vals = rep(NA, length(inputtime)),
-                ssr = NA, deg_f = NA, sigma_hat = NA,
-                ssx = ssx, 
-                pval = NA,
-                # pval_son_null_weak = NA,
-                pval_son = NA))
+    return(list(
+      pars = c(amp = NA, phi = NA),
+      coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
+      fit.vals = rep(NA, length(inputtime)),
+      ssr = NA, deg_f = NA, sigma_hat = NA,
+      ssx = ssx, 
+      pval = NA,
+      # pval_son_null_weak = NA,
+      pval_son = NA,
+      test_stat = NA
+    ))
   }
   
   fit.vals <- stats::fitted(unrest.fit)
@@ -560,6 +584,7 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     ci <- c(amp = NA, phi = NA)
     unrest.ssr <- NA
     pval_son <- NA
+    test_stat <- NA
     # pval_son_null_weak <- NA
     
   } else {
@@ -570,10 +595,11 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     
     ## f-statistic and pvalues
     test <- stats::anova(rest.fit, unrest.fit)
+    test_stat <- test$F[2]
     pval <- test$`Pr(>F)`[2]
     
     pval_son <- 
-      unname(noncentral_f_test(test$F[2], 
+      unname(noncentral_f_test(test_stat, 
                                test$Df[2], 
                                test$Res.Df[2], unrest.fit$x, a_over_sigma))
     # pval_son_null_weak <- 1 - pval_son
@@ -585,13 +611,20 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     
   }    
   
-  list(pars = pars,
-       coeffs = stats::coef(unrest.fit), ci = ci,
-       fit.vals = fit.vals,
-       ssr = unrest.ssr, deg_f = deg_f, sigma_hat = sqrt(unrest.ssr/deg_f),
-       ssx = ssx,
-       # pval_son_null_weak = pval_son_null_weak,
-       pval = pval, pval_son = pval_son)
+  list(
+    pars = pars,
+    coeffs = stats::coef(unrest.fit), 
+    ci = ci,
+    fit.vals = fit.vals,
+    ssr = unrest.ssr, 
+    deg_f = deg_f, 
+    sigma_hat = sqrt(unrest.ssr/deg_f),
+    ssx = ssx,
+    # pval_son_null_weak = pval_son_null_weak,
+    pval = pval, 
+    pval_son = pval_son,
+    test_stat = test_stat
+  )
 }
 
 
