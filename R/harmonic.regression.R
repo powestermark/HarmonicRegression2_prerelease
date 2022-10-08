@@ -141,7 +141,8 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
   ssx <- zapsmall(crossprod(inputts.fit$x))
   # if (det(ssx) == 0 | kappa(ssx) > 0.5/.Machine$double.eps)
   #   return(cbind(amp = NA, phi = NA))
-  ## refrain from parameter estimation if the design matrix is bad
+  ## refrain from parameter estimation if the design matrix is singular
+  ## or strongly collinear
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
     stop(paste("The time points are so unfortunately spaced that a phase and",
@@ -154,7 +155,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
   ## coefficients, amplitudes, phases
   coeffs <- t(stats::coef(inputts.fit))
   pars <- as.data.frame(calculate_amp_phi(coeffs[, 2], coeffs[, 3]))
-  if (!any(duplicated(colnames(inputts)))) {
+  if (!anyDuplicated(colnames(inputts))) {
     rownames(pars) <- colnames(inputts)
   }
   
@@ -207,7 +208,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
                                              fit.res.ssr,
                                              qr.R(inputts.fit$qr),
                                              length(inputtime) - 3))
-    if (!any(duplicated(colnames(inputts))))
+    if (!anyDuplicated(colnames(inputts)))
       rownames(ci) <- colnames(inputts)
     
     
@@ -267,7 +268,8 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
   ## possibly coerce fitted values to matrix
   fit.vals <- as.matrix(stats::fitted(unrest.fit))
   
-  ## refrain from parameter estimation if the design matrix is bad
+  ## refrain from parameter estimation if the design matrix is singular 
+  ## or strongly collinear
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -278,7 +280,7 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
   ## coefficients, amplitudes, phases
   coeffs <- t(stats::coef(unrest.fit))
   pars <- as.data.frame(calculate_amp_phi(coeffs[, 2], coeffs[, 3]))
-  if (!any(duplicated(colnames(inputts)))) {
+  if (!anyDuplicated(colnames(inputts))) {
     rownames(pars) <- colnames(inputts)
   }
   
@@ -312,7 +314,7 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
                                              coeffs[, 2], coeffs[, 3],
                                              unrest.ssr, qr.R(unrest.fit$qr),
                                              deg_f))
-    if (!any(duplicated(colnames(inputts)))) {
+    if (!anyDuplicated(colnames(inputts))) {
       rownames(ci) <- colnames(inputts)
     }
     
@@ -434,7 +436,8 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
                                         sin(2*pi/Tau*inputtime)),
                            na.action = na.exclude, x = TRUE) 
   
-  ## refrain from parameter estimation if the design matrix is bad
+  ## refrain from parameter estimation if the design matrix is singular 
+  ## or strongly collinear
   ssx <- zapsmall(crossprod(inputts.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -555,7 +558,8 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
                                 sin(2*pi/Tau*inputtime) + .,
                               x = TRUE, na.action = na.exclude)
   
-  ## refrain from parameter estimation if the design matrix is bad
+  ## refrain from parameter estimation if the design matrix is singular 
+  ## or strongly collinear
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -674,7 +678,8 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
   }
   
   
-  ## refrain from parameter estimation if the design matrix is bad
+  ## refrain from parameter estimation if the design matrix is singular 
+  ## or strongly collinear
   ssx <- zapsmall(crossprod(inputts.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -893,7 +898,8 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     ))
   }
   
-  ## refrain from parameter estimation if the design matrix is bad
+  ## refrain from parameter estimation if the design matrix is singular
+  ## or strongly collinear
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -1075,13 +1081,13 @@ harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
   #   sapply(result.list, "[[", "pval_son_null_weak")
   pars <- t(sapply(result.list, "[[", "pars"))
   colnames(pars) <- c("amp", "phi")
-  if (!any(duplicated(colnames(inputts)))) {
+  if (!anyDuplicated(colnames(inputts))) {
     rownames(pars) <- colnames(inputts)
   }
   pars <- as.data.frame(pars)
   ci <- t(sapply(result.list, "[[", "ci"))
   colnames(ci) <- c("amp", "phi")
-  if (!any(duplicated(colnames(inputts)))) {
+  if (!anyDuplicated(colnames(inputts))) {
     rownames(ci) <- colnames(inputts)
   }
   ci <- as.data.frame(ci)
@@ -1157,13 +1163,13 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
   #   sapply(result.list, "[[", "pval_son_null_weak")
   pars <- t(sapply(result.list, "[[", "pars"))
   colnames(pars) <- c("amp", "phi")
-  if (!any(duplicated(colnames(inputts)))) {
+  if (!anyDuplicated(colnames(inputts))) {
     rownames(pars) <- colnames(inputts)
   }
   pars <- as.data.frame(pars)
   ci <- t(sapply(result.list, "[[", "ci"))
   colnames(ci) <- c("amp", "phi")
-  if (!any(duplicated(colnames(inputts)))) {
+  if (!anyDuplicated(colnames(inputts))) {
     rownames(ci) <- colnames(inputts)
   }
   ci <- as.data.frame(ci)
