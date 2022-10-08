@@ -98,15 +98,15 @@ normalize_ts_matrix <- function(inputts, inputtime,
                                 norm.pol, norm.pol.degree) {
   if (norm.pol) {
     if (length(inputtime) < (1 + norm.pol.degree)) {
-      stop(paste("Normalization polynomial degree too high for the number",
-                 "of time points"))
+      stop("Normalization polynomial degree too high for the number ",
+           "of time points")
     }
     trendfit <- stats::lm(inputts ~ poly(inputtime, norm.pol.degree, raw = TRUE))
     trend.ts <- stats::fitted(trendfit)
     trend.coef <- stats::coef(trendfit)
     if(any(zapsmall(trend.ts) == 0)) {
-      stop(paste("Normalization using polynomial failed (zero-crossing);", 
-                 "try other normalization settings"))
+      stop("Normalization using polynomial failed (zero-crossing); ",
+           "try other normalization settings")
     }
     return(list(norm.ts = inputts/trend.ts, norm.w = trend.coef, 
                 norm.vals = trend.ts))
@@ -114,8 +114,8 @@ normalize_ts_matrix <- function(inputts, inputtime,
   else {
     tsmeans <- colMeans(inputts)
     if(any(zapsmall(tsmeans) == 0)) {
-      stop(paste("Some time series have zero means, normalization failed.",
-                 "Try other normalization settings, or leave these data out."))
+      stop("Some time series have zero means, normalization failed.  ",
+           "Try other normalization settings, or leave these data out.")
     }
     return(list(norm.ts = scale(inputts, FALSE, tsmeans), norm.w = tsmeans))
   }
@@ -129,8 +129,8 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
   
   ## check time series length
   if (length(inputtime) < 3) {
-    stop(paste("These time series are too short for a meaningful analysis.",
-               "At least 3 time points are needed."))
+    stop("These time series are too short for a meaningful analysis.  ", 
+         "At least 3 time points are needed.")
   }
   
   ## matrix fit of the unrestricted model (harmonic regression)
@@ -145,8 +145,8 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
   ## or strongly collinear
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
-    stop(paste("The time points are so unfortunately spaced that a phase and",
-               "amplitude determination is impossible."))
+    stop("The time points are so unfortunately spaced that a phase and ", 
+         "amplitude determination is impossible.")
   }
   
   ## fitted values, possibly coerce to matrix
@@ -253,8 +253,8 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
   ## check for enough degrees of freedom
   deg_f <- length(inputtime) - (nuisance_dim + 2)
   if (deg_f < 0) {
-    stop(paste("Too few time points.  Unable to continue.  Try fewer nuisance",
-               "variables."))
+    stop("Too few time points.  Unable to continue.  Try fewer nuisance ", 
+         "variables.")
   }
   
   ## matrix fit of the restricted model (polynomial)
@@ -273,8 +273,8 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
-    stop(paste("The time points are so unfortunately spaced that a phase and",
-               "amplitude determination is impossible."))
+    stop("The time points are so unfortunately spaced that a phase and ", 
+         "amplitude determination is impossible.")
   }
   
   ## coefficients, amplitudes, phases
@@ -1039,8 +1039,8 @@ harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
                                     n_cores, robust_scores = robust_scores) {
   
   if (length(inputtime) < 3) {
-    stop(paste("These time series are too short for a meaningful analysis.",
-               "At least 3 time points are needed"))
+    stop("These time series are too short for a meaningful analysis.  ",
+         "At least 3 time points are needed")
   }
   
   # For now, we don't allow future.apply because of unresolved bugs
@@ -1121,8 +1121,8 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
   ## check for enough degrees of freedom
   deg_f <- length(inputtime) - (nuisance_dim + 2)
   if (deg_f < 0) {
-    stop(paste("Too few time points. Unable to continue. Try fewer nuisance",
-               "variables."))
+    stop("Too few time points.  Unable to continue.  Try fewer nuisance ", 
+         "variables.")
   }
   
   # if (n_cores == 1L || !requireNamespace("future.apply", quietly = TRUE)) {
@@ -1395,25 +1395,25 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
   
   ## check series lengths
   if (nrow(inputts) != length(inputtime)) {
-    stop(paste("Length of time series (inputts):", nrow(inputts), " and time",
-               "points (inputtime):", length(inputtime), "do not match."))
+    stop("Length of time series (inputts): ", nrow(inputts), " and time ", 
+         "points (inputtime): ", length(inputtime), " do not match.")
   }
   
   if (norm.pol.degree < 1) {
-    stop(paste("Polynomial for normalization must ",
-               "be of degree 1 or more. Aborting."))
+    stop("Polynomial for normalization must ", 
+         "be of degree 1 or more.  Aborting.")
   }
   
   if (!is.null(nuisance_f) &&
       attr(stats::terms(nuisance_f), "response") != 0L) {
-    stop("nuisance_f must be given and formulated without response variables")
+    stop("nuisance_f must be given and formulated without response variables.")
   }
   
   ## can't accept ts objects with NAs
-  if (any(is.na(inputts)) && ("ts" %in% class(inputts))) {
-    stop(paste("Time series object with NAs was supplied.  This is not yet",
-               "supported; please supply data containing NAs as a plain", 
-               "matrix.  Aborting."))
+  if (anyNA(inputts) && (inherits(inputts, "ts"))) {
+    stop("Time series object with NAs was supplied.  This is not yet ", 
+         "supported; please supply data containing NAs as a plain ",  
+         "matrix.  Aborting.")
   }
   
   if (robust) {
@@ -1533,7 +1533,7 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
   } else {
     
     ## check if there are NAs
-    if (any(is.na(inputts))) {
+    if (anyNA(inputts)) {
       
       ## if NAs; call the slow versions handling NAs separately for each time
       ## series
