@@ -1070,6 +1070,7 @@ harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
   ssx <- lapply(result.list, "[[", "ssx")
   pvals <- sapply(result.list, "[[", "pval")
   pvals_son <- sapply(result.list, "[[", "pval_son")
+  test_stats <- sapply(result.list, "[[", "test_stat")
   # pvals_son_null_weak <- 
   #   sapply(result.list, "[[", "pval_son_null_weak")
   pars <- t(sapply(result.list, "[[", "pars"))
@@ -1085,13 +1086,15 @@ harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
   }
   ci <- as.data.frame(ci)
   
-  return_val <- 
-    list(fit.vals = fit.vals,
-         pars = pars, pvals = pvals,
-         ci = ci, coeffs = coeffs, ssr = ssr, df = deg_f, sigma_hat = sigma_hat,
-         ssx = ssx, 
-         # pvals_son_null_weak = pvals_son_null_weak,
-         pvals_son = pvals_son)
+  return_val <- list(
+    fit.vals = fit.vals,
+    pars = pars, pvals = pvals,
+    ci = ci, coeffs = coeffs, ssr = ssr, df = deg_f, sigma_hat = sigma_hat,
+    ssx = ssx, 
+    # pvals_son_null_weak = pvals_son_null_weak,
+    pvals_son = pvals_son,
+    test_stats = test_stats
+  )
   
   if (robust) {
     c(list(means = sapply(result.list, "[[", "mean")), return_val)
@@ -1149,6 +1152,7 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
   ssx <- lapply(result.list, "[[", "ssx")
   pvals <- sapply(result.list, "[[", "pval")
   pvals_son <- sapply(result.list, "[[", "pval_son")
+  test_stats <- sapply(result.list, "[[", "test_stat")
   # pvals_son_null_weak <- 
   #   sapply(result.list, "[[", "pval_son_null_weak")
   pars <- t(sapply(result.list, "[[", "pars"))
@@ -1164,13 +1168,15 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
   }
   ci <- as.data.frame(ci)
   
-  return_val <- 
-    list(fit.vals = fit.vals,
-         pars = pars, pvals = pvals,
-         ci = ci, coeffs = coeffs, ssr = ssr, df = deg_f, sigma_hat = sigma_hat,
-         ssx = ssx, 
-         # pvals_son_null_weak = pvals_son_null_weak,
-         pvals_son = pvals_son)
+  return_val <- list(
+    fit.vals = fit.vals,
+    pars = pars, pvals = pvals,
+    ci = ci, coeffs = coeffs, ssr = ssr, df = deg_f, sigma_hat = sigma_hat,
+    ssx = ssx, 
+    # pvals_son_null_weak = pvals_son_null_weak,
+    pvals_son = pvals_son,
+    test_stats = test_stats
+  )
   
   if (robust) {
     c(list(means = sapply(result.list, "[[", "mean")), return_val)
@@ -1319,9 +1325,11 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
 #'  covariances for the dependent variables corresponding to (\eqn{m}, \eqn{a
 #'  cos(\omega t)}, and \eqn{b sin(\omega t)}, respecively). \cr
 #'  \code{pvals_son} \tab Vector of p-values according to a noncentral F-
-#'  test for arrhythmicity against a compound null hypothesis of rhythmicity, 
+#'  test for arhythmicity against a compound null hypothesis of rhythmicity, 
 #'  defined by the cutoff \code{a_over_sigma}. If \code{robust = TRUE}, this is 
 #'  a noncentral chi-square test, which is slightly more conservative. \cr
+#'  \code{test_stats} \tab The F test statistic for the harmonic regression p
+#'  values. \cr
 #' }
 #' 
 #' @examples
@@ -1694,7 +1702,8 @@ summary.hregm <- function(object, ...) {
     phi_ci = object$ci$phi,
     sigma_hat = object$sigma_hat,
     pvalues = object$pvals,
-    pvalues_son = object$pvals_son
+    pvalues_son = object$pvals_son,
+    test_stats = object$test_stats
   )
   rownames(results) <- rownames(object$pars)
   results
