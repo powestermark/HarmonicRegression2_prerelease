@@ -1843,10 +1843,10 @@ regularize_pvals <- function(pvals, breakpoints = c(0.99, 0.98, 0.9, 0.8),
                              ref_low = 0.6, ref_high = 0.7,
                              suppress_message = FALSE) {
   if (!suppress_message) {
-    message(paste("Regularized (pseudo) p values must only be used for",
-                  "estimating the size of the non-null (H1) population, e.g.,",
-                  "with qvalue::pi0est() in the qvalue package.",
-                  "They must not be used as p values for any other purposes."))
+    message("Regularized (pseudo) p values must only be used for ",
+            "estimating the size of the non-null (H1) population, e.g., ",
+            "with qvalue::pi0est() in the qvalue package.  ",
+            "They must not be used as p values for any other purposes.")
   }
   breakpoint <- utils::head(breakpoints, 1)
   breakpoints <- utils::tail(breakpoints, -1)
