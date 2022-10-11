@@ -7,21 +7,21 @@ calculate_amp_phi <- function(a_cos, b_sin) {
 calculate_ci_amp_phi <- function(amp, a_cos, b_sin, fit_res_ssr, R, deg_f) {
   # if (det(ssx) == 0 | kappa(ssx) > 0.5/.Machine$double.eps)
   #   return(cbind(amp = NA, phi = NA))
-  ## manually compute variance-covariance matrix (faster here than vcov())
+  # manually compute variance-covariance matrix (faster here than vcov())
   ssxinv <- chol2inv(R)
-  ## need only rows 2 and 3 corresponding to cos and sin, according to
-  ## the delta rule
+  # need only rows 2 and 3 corresponding to cos and sin, according to
+  # the delta rule
   ssxinvab <- ssxinv[2:3, 2:3]
-  ## Jacobians stored row-wise in a matrix
+  # Jacobians stored row-wise in a matrix
   Ja <- cbind(ifelse(amp > 0, a_cos/amp, 0), 
               ifelse(amp > 0, b_sin/amp, 0))
   Jp <- cbind(ifelse(amp > 0, -b_sin/amp^2, 0), 
               ifelse(amp > 0, a_cos/amp^2, 0))
-  ## dimension of non-matrix vector x will automatically be adjusted by R
-  ## to conform with matrix multiplication, see ?matmult
+  # dimension of non-matrix vector x will automatically be adjusted by R
+  # to conform with matrix multiplication, see ?matmult
   var_a <- apply(Ja, 1, function(x) x %*% ssxinvab %*% x) * fit_res_ssr/deg_f
   var_p <- apply(Jp, 1, function(x) x %*% ssxinvab %*% x) * fit_res_ssr/deg_f
-  ##ciquant <- qnorm(0.025, lower.tail = FALSE)
+  #ciquant <- qnorm(0.025, lower.tail = FALSE)
   ciquant <- 2
   ci_amp <- sqrt(drop(var_a))*ciquant
   ci_phi <- sqrt(drop(var_p))*ciquant
@@ -40,7 +40,7 @@ calculate_ci_amp_phi_r <- function(amp, a_cos, b_sin, ssx, thefit) {
               ifelse(amp > 0, a_cos/amp^2, 0))
   var_a <- Ja %*% vcovmat %*% t(Ja)
   var_p <- Jp %*% vcovmat %*% t(Jp)
-  ##ciquant <- qnorm(0.025, lower.tail = FALSE)
+  #ciquant <- qnorm(0.025, lower.tail = FALSE)
   ciquant <- 2
   ci_amp <- sqrt(drop(var_a))*ciquant
   ci_phi <- sqrt(drop(var_p))*ciquant
@@ -52,23 +52,23 @@ calculate_ci_amp_phi_r <- function(amp, a_cos, b_sin, ssx, thefit) {
 noncentral_f_test <- function(Fval, deg_f1, deg_f2, X, a_over_sigma) {
   # where X is the N x 3 design matrix.
   X1 <- X[, -(2:3), drop = FALSE]
-  ## model matrix harmonics
+  # model matrix harmonics
   X2 <- X[, 2:3]
-  ## see e.g., A.C. Davison, Statistical Models, p. 367
+  # see e.g., A.C. Davison, Statistical Models, p. 367
   H1 <- X1 %*% solve(crossprod(X1)) %*% t(X1)
   Z2 <- (diag(dim(X2)[1]) - H1) %*% X2
   
-  ## smallest eigenvalue of Z2 (equal to N/2 if balanced)
+  # smallest eigenvalue of Z2 (equal to N/2 if balanced)
   mineig <- min(eigen(crossprod(Z2), 
                       only.values = TRUE, symmetric = TRUE)$values)
   
-  ## p value according to noncentral F distribution
+  # p value according to noncentral F distribution
   delsq <- a_over_sigma^2*mineig
-  ## note that this function could be useful also in the robust context; the
-  ## 3*pi correction (see below) is not necessarily needed here, since this
-  ## function would in the context of semiparametric reduction of dispersion be
-  ## used only with upper tail (test against weak or zero rhythmicity compound
-  ## null), for which higher ncp makes the test slightly more conservative
+  # note that this function could be useful also in the robust context; the
+  # 3*pi correction (see below) is not necessarily needed here, since this
+  # function would in the context of semiparametric reduction of dispersion be
+  # used only with upper tail (test against weak or zero rhythmicity compound
+  # null), for which higher ncp makes the test slightly more conservative
   stats::pf(Fval, df1 = deg_f1, df2 = deg_f2, ncp = delsq)
   
 }
@@ -76,17 +76,17 @@ noncentral_f_test <- function(Fval, deg_f1, deg_f2, X, a_over_sigma) {
 noncentral_chisq_test <- function(x2, deg_f, X, a_over_sigma) {
   # where X is the N x 3 design matrix.
   X1 <- X[, -(2:3), drop = FALSE]
-  ## model matrix harmonics
+  # model matrix harmonics
   X2 <- X[, 2:3]
-  ## see e.g., A.C. Davison, Statistical Models, p. 367
+  # see e.g., A.C. Davison, Statistical Models, p. 367
   H1 <- X1 %*% solve(crossprod(X1)) %*% t(X1)
   Z2 <- (diag(dim(X2)[1]) - H1) %*% X2
   
-  ## smallest eigenvalue of Z2 (equal to N/2 if balanced)
+  # smallest eigenvalue of Z2 (equal to N/2 if balanced)
   mineig <- min(eigen(crossprod(Z2), only.values = TRUE)$values)
   
-  ## p value according to noncentral F distribution
-  ## see Hettmansperger & McKean (2011) page 203 for factor 3/pi
+  # p value according to noncentral F distribution
+  # see Hettmansperger & McKean (2011) page 203 for factor 3/pi
   delsq <- a_over_sigma^2*mineig*3/pi
   stats::pchisq(x2, df = deg_f, ncp = delsq)
   
@@ -127,40 +127,40 @@ normalize_ts_matrix <- function(inputts, inputtime,
 harmonic_regression_matrix <- function(inputts, inputtime, Tau,
                                        a_over_sigma) {
   
-  ## check time series length
+  # check time series length
   if (length(inputtime) < 3) {
     stop("These time series are too short for a meaningful analysis.  ", 
          "At least 3 time points are needed.")
   }
   
-  ## matrix fit of the unrestricted model (harmonic regression)
+  # matrix fit of the unrestricted model (harmonic regression)
   inputts.fit <- stats::lm(inputts ~ 1 + cos(2*pi/Tau*inputtime) + 
                              sin(2*pi/Tau*inputtime), x = TRUE)
   
-  ## covariance matrix of independent variables
+  # covariance matrix of independent variables
   ssx <- zapsmall(crossprod(inputts.fit$x))
   # if (det(ssx) == 0 | kappa(ssx) > 0.5/.Machine$double.eps)
   #   return(cbind(amp = NA, phi = NA))
-  ## refrain from parameter estimation if the design matrix is singular
-  ## or strongly collinear
+  # refrain from parameter estimation if the design matrix is singular
+  # or strongly collinear
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
     stop("The time points are so unfortunately spaced that a phase and ", 
          "amplitude determination is impossible.")
   }
   
-  ## fitted values, possibly coerce to matrix
+  # fitted values, possibly coerce to matrix
   fit.vals <- as.matrix(stats::fitted(inputts.fit))
   
-  ## coefficients, amplitudes, phases
+  # coefficients, amplitudes, phases
   coeffs <- t(stats::coef(inputts.fit))
   pars <- as.data.frame(calculate_amp_phi(coeffs[, 2], coeffs[, 3]))
   if (!anyDuplicated(colnames(inputts))) {
     rownames(pars) <- colnames(inputts)
   }
   
-  ## if more than 3 time points are available, confidence intervals and p-values
-  ## can be computed.
+  # if more than 3 time points are available, confidence intervals and p-values
+  # can be computed.
   if (length(inputtime) == 3) {
     
     pvals <- NA
@@ -172,12 +172,12 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     
   } else {
     
-    ## sum squared residual of the restricted and unrestricted models
+    # sum squared residual of the restricted and unrestricted models
     # inputts.ssr <- apply(inputts, 2, var)*(length(inputtime) - 1)
     
     # if (is.matrix(residuals(inputts.fit)))
     #   fit.res.ssr <- colSums(residuals(inputts.fit)^2)
-    # ## handle also the case with one single input ts
+    # # handle also the case with one single input ts
     # else
     #   fit.res.ssr <- sum(residuals(inputts.fit)^2)
     
@@ -187,7 +187,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     names(inputts.fit.summaries) <- 
       gsub("Response ", "", names(inputts.fit.summaries))
     
-    ## f-statistic and pvalues
+    # f-statistic and pvalues
     
     fstats <- as.data.frame(t(sapply(inputts.fit.summaries, 
                                      function(x) x$fstatistic)))
@@ -202,7 +202,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     
     # pvals_son_null_weak <- 1 - pvals_son
     
-    ## distance to upper confidence interval limit
+    # distance to upper confidence interval limit
     ci <- as.data.frame(calculate_ci_amp_phi(pars$amp, 
                                              coeffs[, 2], coeffs[, 3],
                                              fit.res.ssr,
@@ -216,7 +216,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
   
   deg_f <- length(inputtime) - 3
   
-  ## return values
+  # return values
   list(
     fit.vals = fit.vals,
     pars = pars, pvals = pvals, 
@@ -250,26 +250,26 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
   environment(nuisance_f) <- new_env
   
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
-  ## check for enough degrees of freedom
+  # check for enough degrees of freedom
   deg_f <- length(inputtime) - (nuisance_dim + 2)
   if (deg_f < 0) {
     stop("Too few time points.  Unable to continue.  Try fewer nuisance ", 
          "variables.")
   }
   
-  ## matrix fit of the restricted model (polynomial)
+  # matrix fit of the restricted model (polynomial)
   rest.fit <- stats::lm(stats::update(nuisance_f, inputts ~ .))
   
-  ## matrix fit of the unrestricted model (harmonic regression)
+  # matrix fit of the unrestricted model (harmonic regression)
   unrest.fit <- stats::update(rest.fit, . ~ 
                                 cos(2*pi/Tau*inputtime) + 
                                 sin(2*pi/Tau*inputtime) + .,
                               x = TRUE)
-  ## possibly coerce fitted values to matrix
+  # possibly coerce fitted values to matrix
   fit.vals <- as.matrix(stats::fitted(unrest.fit))
   
-  ## refrain from parameter estimation if the design matrix is singular 
-  ## or strongly collinear
+  # refrain from parameter estimation if the design matrix is singular 
+  # or strongly collinear
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -277,7 +277,7 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
          "amplitude determination is impossible.")
   }
   
-  ## coefficients, amplitudes, phases
+  # coefficients, amplitudes, phases
   coeffs <- t(stats::coef(unrest.fit))
   pars <- as.data.frame(calculate_amp_phi(coeffs[, 2], coeffs[, 3]))
   if (!anyDuplicated(colnames(inputts))) {
@@ -298,7 +298,7 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
     unrest.ssr <- stats::deviance(unrest.fit)
     rest.ssr <- stats::deviance(rest.fit)
     
-    ## f-statistic and pvalues (anova() is not useful here)
+    # f-statistic and pvalues (anova() is not useful here)
     fstats <- ((rest.ssr - unrest.ssr)/2) / (unrest.ssr/deg_f)
     pvals <- stats::pf(fstats, 2, deg_f, lower.tail = FALSE)
     
@@ -309,7 +309,7 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
     # pvals_son_null_weak <- 1 - pvals_son
     
     
-    ## distance to upper confidence interval limit 
+    # distance to upper confidence interval limit 
     ci <- as.data.frame(calculate_ci_amp_phi(pars$amp, 
                                              coeffs[, 2], coeffs[, 3],
                                              unrest.ssr, qr.R(unrest.fit$qr),
@@ -321,7 +321,7 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
   }
   
   
-  ## return values
+  # return values
   list(
     fit.vals = fit.vals,
     pars = pars, pvals = pvals, 
@@ -373,8 +373,8 @@ normalize_one_ts <- function(inputts, inputtime,
   }
 }
 
-## this is only for the case that multiplicative normalization is done for 
-## polynomials.  "mean" normalization is done as part of the main robust fit.
+# this is only for the case that multiplicative normalization is done for 
+# polynomials.  "mean" normalization is done as part of the main robust fit.
 normalize_one_ts_r_pol <- function(inputts, inputtime, norm.pol.degree,
                                    robust_scores) {
   n.non.na <- length(which(!is.na(inputts)))
@@ -431,13 +431,13 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
       test_stat = NA
     ))
   }
-  ## harmonic regression
+  # harmonic regression
   inputts.fit <- stats::lm(inputts ~ (1 + cos(2*pi/Tau*inputtime) + 
                                         sin(2*pi/Tau*inputtime)),
                            na.action = na.exclude, x = TRUE) 
   
-  ## refrain from parameter estimation if the design matrix is singular 
-  ## or strongly collinear
+  # refrain from parameter estimation if the design matrix is singular 
+  # or strongly collinear
   ssx <- zapsmall(crossprod(inputts.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -470,10 +470,10 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
     
   } else {
     
-    ## sum squared residual of the unrestricted model; fitted values
+    # sum squared residual of the unrestricted model; fitted values
     fit.res.ssr <- deviance(inputts.fit)
     
-    ## f-statistic and pvalues
+    # f-statistic and pvalues
     inputts_fstat <- summary(inputts.fit)$fstatistic
     test_stat <- inputts_fstat["value"]
     pval <- unname(
@@ -489,7 +489,7 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
                                inputts.fit$x, a_over_sigma))
     # pval_son_null_weak <- 1 - pval_son
     
-    ## distance to upper confidence interval limit 
+    # distance to upper confidence interval limit 
     ci <- calculate_ci_amp_phi(pars[, "amp"], coeffs[2], coeffs[3],
                                fit.res.ssr, qr.R(inputts.fit$qr),
                                n.non.na - 3)
@@ -532,7 +532,7 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
   
   n.non.na <- length(which(!is.na(inputts)))
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
-  ## check for enough degrees of freedom
+  # check for enough degrees of freedom
   deg_f <- n.non.na - (nuisance_dim + 2)
   if (deg_f < 0) {
     return(list(
@@ -548,18 +548,18 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     ))
   }
   
-  ## fit of the restricted model (nuisance_f)
+  # fit of the restricted model (nuisance_f)
   rest.fit <- stats::lm(stats::update(nuisance_f, inputts ~ .), 
                         na.action = na.exclude)
   
-  ## matrix fit of the unrestricted model (harmonic regression)
+  # matrix fit of the unrestricted model (harmonic regression)
   unrest.fit <- stats::update(rest.fit, . ~ 
                                 cos(2*pi/Tau*inputtime) + 
                                 sin(2*pi/Tau*inputtime) + .,
                               x = TRUE, na.action = na.exclude)
   
-  ## refrain from parameter estimation if the design matrix is singular 
-  ## or strongly collinear
+  # refrain from parameter estimation if the design matrix is singular 
+  # or strongly collinear
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -578,7 +578,7 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
   
   fit.vals <- stats::fitted(unrest.fit)
   
-  ## coefficients, amplitudes, phases
+  # coefficients, amplitudes, phases
   coeffs <- stats::coef(unrest.fit)
   pars <- calculate_amp_phi(coeffs[2], coeffs[3])
   
@@ -593,11 +593,11 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     
   } else {
     
-    ## sum squared residual of the restricted and unrestricted models
+    # sum squared residual of the restricted and unrestricted models
     rest.ssr <- stats::deviance(rest.fit)
     unrest.ssr <- stats::deviance(unrest.fit)
     
-    ## f-statistic and pvalues
+    # f-statistic and pvalues
     test <- stats::anova(rest.fit, unrest.fit)
     test_stat <- test$F[2]
     pval <- test$`Pr(>F)`[2]
@@ -609,7 +609,7 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     # pval_son_null_weak <- 1 - pval_son
     
     
-    ## distance to upper confidence interval limit (Halberg 1967)
+    # distance to upper confidence interval limit (Halberg 1967)
     ci <- calculate_ci_amp_phi(pars[, "amp"], coeffs[2], coeffs[3],
                                unrest.ssr, qr.R(unrest.fit$qr), deg_f)
     
@@ -678,8 +678,8 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
   }
   
   
-  ## refrain from parameter estimation if the design matrix is singular 
-  ## or strongly collinear
+  # refrain from parameter estimation if the design matrix is singular 
+  # or strongly collinear
   ssx <- zapsmall(crossprod(inputts.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -697,8 +697,8 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     ))
   }
   
-  ## workaround for a bug in rfit(), where NAs are not propagated by fitted() 
-  ## although na.exclude() is used
+  # workaround for a bug in rfit(), where NAs are not propagated by fitted() 
+  # although na.exclude() is used
   if (n.non.na < length(inputts)) {
     fit.vals <- rep(NA, length(inputts))
     fit.vals[!is.na(inputts)] <- stats::fitted(inputts.fit)
@@ -710,8 +710,8 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
   coeffs <- stats::coef(inputts.fit)
   pars <- calculate_amp_phi(coeffs[2], coeffs[3])
   
-  ## compute robust mean by averaging over the design matrix 
-  ## (see for instance Davison pp. 383--384)
+  # compute robust mean by averaging over the design matrix 
+  # (see for instance Davison pp. 383--384)
   mean_r <- drop(crossprod(coeffs, colMeans(inputts.fit$x)))
   
   if (n.non.na == 3) {
@@ -731,13 +731,13 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     
   } else {
     
-    ## p value
+    # p value
     rfit_summary <- try(
       Rfit::summary.rfit(inputts.fit, overall.test = "drop"),
       silent = TRUE)
     
     
-    ## there may be conditions for which summary.rfit() fails
+    # there may be conditions for which summary.rfit() fails
     if (isa(rfit_summary, "try-error")) {
       warning(paste("The robust testing procedure against the null hypothesis", 
                     "did not converge for one",
@@ -784,19 +784,19 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       
     }
     
-    ## sum squared residual of the unrestricted model; fitted values
+    # sum squared residual of the unrestricted model; fitted values
     fit.res.ssr <- sum(residuals(inputts.fit)^2, na.rm = TRUE)
     
-    ## sigma_hat, see Hettmansperger & McKean (2011) page 203
+    # sigma_hat, see Hettmansperger & McKean (2011) page 203
     sigma_hat <- inputts.fit$tauhat*sqrt(3/pi)
     
-    ## distance to upper confidence interval limit 
+    # distance to upper confidence interval limit 
     ci <- calculate_ci_amp_phi_r(pars[, "amp"], coeffs[2], coeffs[3],
                                  ssx, inputts.fit)
     
     if (normalize) {
-      ## if we normalize, we normalize here, to avoid an extra earlier 
-      ## run of Rfit just to compute the robust mean.
+      # if we normalize, we normalize here, to avoid an extra earlier 
+      # run of Rfit just to compute the robust mean.
       fit.res.ssr <- fit.res.ssr/(mean_r^2)
       sigma_hat <- sigma_hat/mean_r
       ci[, "amp"] <- ci[, "amp"]/mean_r
@@ -849,7 +849,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
   
   n.non.na <- length(which(!is.na(inputts)))
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
-  ## check for enough degrees of freedom
+  # check for enough degrees of freedom
   deg_f <- n.non.na - (nuisance_dim + 2)
   if (deg_f < 0) {
     return(list(
@@ -866,7 +866,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     ))
   }
   
-  ## fit of the restricted model (nuisance_f)
+  # fit of the restricted model (nuisance_f)
   # rest_f <- stats::update(nuisance_f_local, inputts ~ .)
   rest_f <- stats::update(nuisance_f, inputts ~ .)
   rest.fit <- try(
@@ -919,8 +919,8 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     ))
   }
   
-  ## refrain from parameter estimation if the design matrix is singular
-  ## or strongly collinear
+  # refrain from parameter estimation if the design matrix is singular
+  # or strongly collinear
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
       (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
@@ -938,8 +938,8 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     ))
   }
   
-  ## workaround for a bug in rfit(), where NAs are not propagated by fitted() 
-  ## although na.exclude() is used
+  # workaround for a bug in rfit(), where NAs are not propagated by fitted() 
+  # although na.exclude() is used
   if (n.non.na < length(inputts)) {
     fit.vals <- rep(NA, length(inputts))
     fit.vals[!is.na(inputts)] <- stats::fitted(unrest.fit)
@@ -948,12 +948,12 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
   }
   
   
-  ## coefficients, amplitudes, phases
+  # coefficients, amplitudes, phases
   coeffs <- stats::coef(unrest.fit)
   pars <- calculate_amp_phi(coeffs[2], coeffs[3])
   
-  ## compute robust mean with by averaging over the design matrix 
-  ## (see for instance Davison pp. 383--384)
+  # compute robust mean with by averaging over the design matrix 
+  # (see for instance Davison pp. 383--384)
   mean_r <- drop(crossprod(coeffs, colMeans(unrest.fit$x)))
   
   if (deg_f == 0) {
@@ -974,15 +974,15 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     
     unrest.ssr <- sum(stats::residuals(unrest.fit)^2, na.rm = TRUE)
     
-    ## sigma_hat, see Hettmansperger & McKean (2011) page 203
+    # sigma_hat, see Hettmansperger & McKean (2011) page 203
     sigma_hat <- unrest.fit$tauhat*sqrt(3/pi)
     
     
-    ## p value
+    # p value
     rfit_testresult <- try(Rfit::drop.test(unrest.fit, rest.fit),
                            silent = TRUE)
     
-    ## there may be conditions for which rfit() fails
+    # there may be conditions for which rfit() fails
     if (isa(rfit_testresult, "try-error")) {
       warning(paste("The robust testing procedure against the null hypothesis", 
                     "did not converge for one",
@@ -1015,13 +1015,13 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     }
     
     
-    ## distance to upper confidence interval limit (Halberg 1967)
+    # distance to upper confidence interval limit (Halberg 1967)
     ci <- calculate_ci_amp_phi_r(pars[, "amp"], coeffs[2], coeffs[3],
                                  ssx, unrest.fit)
     
     if (normalize) {
-      ## if we normalize, we normalize here, to avoid an extra earlier
-      ## run of Rfit just to compute the robust mean.
+      # if we normalize, we normalize here, to avoid an extra earlier
+      # run of Rfit just to compute the robust mean.
       unrest.ssr <- unrest.ssr/(mean_r^2)
       sigma_hat <- sigma_hat/mean_r
       ci[, "amp"] <- ci[, "amp"]/mean_r
@@ -1139,7 +1139,7 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
                                                robust_scores) {
   
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
-  ## check for enough degrees of freedom
+  # check for enough degrees of freedom
   deg_f <- length(inputtime) - (nuisance_dim + 2)
   if (deg_f < 0) {
     stop("Too few time points.  Unable to continue.  Try fewer nuisance ", 
@@ -1404,17 +1404,17 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                 n_cores = 1L,
                                 robust_scores = Rfit::wscores) {
   
-  ## check that input data come as numerics
+  # check that input data come as numerics
   if (!is.numeric(inputts) || !is.numeric(inputtime)) {
     stop("Input data (inputts, inputtime) must be numeric")
   }
   
-  ## try to coerce input to matrix, if needed
+  # try to coerce input to matrix, if needed
   if (is.vector(inputts)) {
     inputts <- as.matrix(inputts)
   }
   
-  ## check series lengths
+  # check series lengths
   if (nrow(inputts) != length(inputtime)) {
     stop("Length of time series (inputts): ", nrow(inputts), " and time ", 
          "points (inputtime): ", length(inputtime), " do not match.")
@@ -1430,7 +1430,7 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
     stop("nuisance_f must be given and formulated without response variables.")
   }
   
-  ## can't accept ts objects with NAs
+  # can't accept ts objects with NAs
   if (anyNA(inputts) && (inherits(inputts, "ts"))) {
     stop("Time series object with NAs was supplied.  This is not yet ", 
          "supported; please supply data containing NAs as a plain ",  
@@ -1446,8 +1446,8 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
     if (normalize) {
       
       if (norm.pol) {
-        ## in this special case, user is responsible for sensible interpretation
-        ## of the normalization
+        # in this special case, user is responsible for sensible interpretation
+        # of the normalization
         # if (n_cores == 1L || !requireNamespace("future.apply", 
         #                                        quietly = TRUE)) {
         norm.ts.list <- apply(inputts, 2, normalize_one_ts_r_pol,
@@ -1464,7 +1464,7 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
         norm.ts <- sapply(norm.ts.list, "[[", "norm.ts")
         norm.w <- sapply(norm.ts.list, "[[", "norm.w")
         norm.vals <- sapply(norm.ts.list, "[[", "norm.vals")
-        ## normalization just performed; use normalize = FALSE below
+        # normalization just performed; use normalize = FALSE below
         if (!is.null(nuisance_f)) {
           results <- harmonic_regression_nas_nuisance(norm.ts, inputtime,
                                                       Tau, nuisance_f,
@@ -1484,8 +1484,8 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
         }
         results <- append(results, list(norm.fit.vals = results$fit.vals),
                           after = 1)
-        ## delete the overall mean returned by the regression, we use the
-        ## normalization polynomial coefficients here instead.
+        # delete the overall mean returned by the regression, we use the
+        # normalization polynomial coefficients here instead.
         results$means <- NULL
         results <- c(list(means = norm.w), results)
         results <- append(results, list(normts = norm.ts),
@@ -1493,8 +1493,8 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
         results$fit.vals <- results$norm.fit.vals*norm.vals
         
       } else {
-        ## in this case, normalization will be performed from within
-        ## fit_one_harmonic.*.r for efficiency reasons
+        # in this case, normalization will be performed from within
+        # fit_one_harmonic.*.r for efficiency reasons
         norm.ts <- inputts
         if (!is.null(nuisance_f)) {
           results <- harmonic_regression_nas_nuisance(norm.ts, inputtime,
@@ -1513,14 +1513,14 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                              a_over_sigma = a_over_sigma,
                                              n_cores = n_cores,
                                              robust_scores = robust_scores)
-          ## reset the intercept to 1 for consistency with classic harmonic
-          ## regression
+          # reset the intercept to 1 for consistency with classic harmonic
+          # regression
           results$coeffs[, 1] <- 1
         }
         
         results <- append(results, list(norm.fit.vals = results$fit.vals),
                           after = 1)
-        ## we have to do the real ts normalization here:
+        # we have to do the real ts normalization here:
         results <- append(results, 
                           list(normts = sweep(norm.ts, 2, results$means, "/")),
                           after = 1)
@@ -1528,7 +1528,7 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
         
       }
       
-      ## end if (normalize)
+      # end if (normalize)
       
     } else {
       if (!is.null(nuisance_f)) {
@@ -1549,15 +1549,15 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
       }
     }
     
-    ## end if (robust) 
+    # end if (robust) 
     
   } else {
     
-    ## check if there are NAs
+    # check if there are NAs
     if (anyNA(inputts)) {
       
-      ## if NAs; call the slow versions handling NAs separately for each time
-      ## series
+      # if NAs; call the slow versions handling NAs separately for each time
+      # series
       if (normalize) {
         # if (n_cores == 1L || !requireNamespace("future.apply", 
         #                                        quietly = TRUE)) {
@@ -1587,8 +1587,8 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                              a_over_sigma = a_over_sigma,
                                              n_cores = n_cores)
         }
-        ## results$fit.vals are really fits to normalized time series
-        ## fit.vals will be recalculated below
+        # results$fit.vals are really fits to normalized time series
+        # fit.vals will be recalculated below
         results <- append(results, list(norm.fit.vals = results$fit.vals),
                           after = 1)
         results <- c(list(means = norm.w), results)
@@ -1621,10 +1621,10 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
       
     } else {
       
-      ## use fast vectorized versions
+      # use fast vectorized versions
       
       if (normalize) {
-        ## normalization
+        # normalization
         norm.ts.list <- normalize_ts_matrix(inputts, inputtime, 
                                             norm.pol, norm.pol.degree)
         if (!is.null(nuisance_f)) {
@@ -1643,7 +1643,7 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
         results <- c(list(means = norm.ts.list$norm.w), results)
         results <- append(results, list(normts = norm.ts.list$norm.ts),
                           after = 1)
-        ## compute non-normalized fitted values
+        # compute non-normalized fitted values
         if (norm.pol) {
           results$fit.vals <- results$norm.fit.vals*norm.ts.list$norm.vals
         } else {
@@ -1773,23 +1773,23 @@ fitted.hregm <- function(object, normalized = FALSE, ...) {
 redistribute_pvals <- function(pvals, breakpoint = 0.9, next_breakpoint = 0.8,
                                ref_low = 0.6, ref_high = 0.7) {
   candidate_ind <- which(pvals > breakpoint)
-  ## compute predicted number of p values in the interval 
-  ## 1 >= p > breakpoint, based on the interval
-  ## ref_high > p > ref_low
+  # compute predicted number of p values in the interval 
+  # 1 >= p > breakpoint, based on the interval
+  # ref_high > p > ref_low
   n_unif_reference <-
     round(length(which(pvals > ref_low & pvals < ref_high)) *
             (1 - breakpoint)/(ref_high - ref_low))
-  ## stop if number of p values > breakpoint is already lower than the 
-  ## predicted number
+  # stop if number of p values > breakpoint is already lower than the 
+  # predicted number
   if (length(candidate_ind) <= n_unif_reference) {
     stop("redistribute_pvals(): No right tail peak")
   }
-  ## otherwhise: redistribute a number of p values > breakpoint; the number
-  ## exceeding the predicted number
+  # otherwhise: redistribute a number of p values > breakpoint; the number
+  # exceeding the predicted number
   to_replace <- sample(candidate_ind,
                        length(candidate_ind) - n_unif_reference,
                        replace = FALSE)
-  ## they get redistributed into an interval 1 >= p > next_breakpoint.
+  # they get redistributed into an interval 1 >= p > next_breakpoint.
   replace(pvals, to_replace, runif(length(to_replace),
                                    min = next_breakpoint, max = 1))
 }
@@ -1833,8 +1833,8 @@ redistribute_pvals <- function(pvals, breakpoint = 0.9, next_breakpoint = 0.8,
 #' @export
 #'
 #' @examples
-#' ## generate example p values from beta distributions, exhibiting a
-#' ## bimodal distribution
+#' # generate example p values from beta distributions, exhibiting a
+#' # bimodal distribution
 #' set.seed(123)
 #' pvals <- c(stats::rbeta(1000, 0.5, 5), stats::rbeta(300, 5, 0.5))
 #' hist(pvals)
