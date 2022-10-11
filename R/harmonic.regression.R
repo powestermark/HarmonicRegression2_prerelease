@@ -874,13 +874,34 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     silent = TRUE
   )
   
-  ## matrix fit of the unrestricted model (harmonic regression)
+  # unrestricted model
   unrest_f <- stats::update(rest_f, ~ cos(2*pi/Tau*inputtime) + 
                               sin(2*pi/Tau*inputtime) + .)
-  unrest.fit <- try(
-    Rfit::rfit(unrest_f, na.action = na.exclude, scores = robust_scores), 
-    silent = TRUE
-  )
+  
+  # we only proceed if the first fit succeeded
+  if (!isa(rest.fit, "try-error")) {
+    
+    if (n.non.na < length(inputts)) {
+      rest_fit.vals <- rep(NA, length(inputts))
+      rest_fit.vals[!is.na(inputts)] <- stats::fitted(rest.fit)
+    } else {
+      rest_fit.vals <- stats::fitted(rest.fit)
+    }
+    # fit of the unrestricted model (harmonic regression)
+    unrest.fit <- try(
+      Rfit::rfit(unrest_f, na.action = na.exclude, scores = robust_scores,
+                 yhat0 = rest_fit.vals), 
+      silent = TRUE
+    )
+  } 
+  # else {
+  #   unrest.fit <- try(
+  #     Rfit::rfit(unrest_f, na.action = na.exclude, scores = robust_scores), 
+  #     silent = TRUE
+  #   )
+  # }
+  
+  
   if (isa(rest.fit, "try-error") || isa(unrest.fit, "try-error")) {
     warning(paste("Robust fitting procedure failed in one case. NAs", 
                   "are reported for this case."))
