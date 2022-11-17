@@ -923,7 +923,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
   # or strongly collinear
   ssx <- zapsmall(crossprod(unrest.fit$x))
   if (det(ssx) == 0 || 
-      (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 4))) {
+      (log10(kappa(ssx)) > (-log10(.Machine$double.eps) - 5))) {
     return(list(
       pars = c(amp = NA, phi = NA),
       coeffs = rep(NA, nuisance_dim + 2), ci = c(amp = NA, phi = NA),
