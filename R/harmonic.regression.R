@@ -92,6 +92,32 @@ noncentral_chisq_test <- function(x2, deg_f, X, a_over_sigma) {
   
 }
 
+noncentral_test_stat_quantile <- function(test_stat_quantile, 
+                                          deg_f1, deg_f2, X, a_over_sigma) {
+  
+  # where X is the N x 3 design matrix.
+  X1 <- X[, -(2:3), drop = FALSE]
+  # model matrix harmonics
+  X2 <- X[, 2:3]
+  # see e.g., A.C. Davison, Statistical Models, p. 367
+  H1 <- X1 %*% solve(crossprod(X1)) %*% t(X1)
+  Z2 <- (diag(dim(X2)[1]) - H1) %*% X2
+  
+  # smallest eigenvalue of Z2 (equal to N/2 if balanced)
+  mineig <- min(eigen(crossprod(Z2), 
+                      only.values = TRUE, symmetric = TRUE)$values)
+  
+  # p value according to noncentral F distribution
+  delsq <- a_over_sigma^2*mineig
+  # note that this function could be useful also in the robust context; the
+  # 3*pi correction (see below) is not necessarily needed here, since this
+  # function would in the context of semiparametric reduction of dispersion be
+  # used only with upper tail (test against weak or zero rhythmicity compound
+  # null), for which higher ncp makes the test slightly more conservative
+  stats::qf(test_stat_quantile, df1 = deg_f1, df2 = deg_f2, ncp = delsq)
+  
+}
+
 
 # normalize time series matrix (no NAs) -----------------------------------
 normalize_ts_matrix <- function(inputts, inputtime, 
