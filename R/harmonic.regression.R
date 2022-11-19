@@ -151,7 +151,7 @@ normalize_ts_matrix <- function(inputts, inputtime,
 
 # harmonic regression matrix (no NAs) -------------------------------------
 harmonic_regression_matrix <- function(inputts, inputtime, Tau,
-                                       a_over_sigma) {
+                                       a_over_sigma, test_stat_quantile = 0.5) {
   
   # check time series length
   if (length(inputtime) < 3) {
@@ -187,6 +187,9 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
   
   # if more than 3 time points are available, confidence intervals and p-values
   # can be computed.
+  
+  deg_f <- length(inputtime) - 3
+  
   if (length(inputtime) == 3) {
     
     pvals <- NA
@@ -194,6 +197,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     fit.res.ssr <- NA
     pvals_son <- NA
     test_stats <- NA
+    test_stat_at_quantile <- NA
     # pvals_son_null_weak <- NA
     
   } else {
@@ -218,8 +222,14 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     fstats <- as.data.frame(t(sapply(inputts.fit.summaries, 
                                      function(x) x$fstatistic)))
     pvals <- with(fstats, stats::pf(value, numdf, dendf, lower.tail = FALSE))
-    test_stats <- fstats$value
     names(pvals) <- names(inputts.fit.summaries)
+    
+    test_stats <- fstats$value
+    test_stat_at_quantile <- noncentral_test_stat_quantile(
+      test_stat_quantile,
+      2, deg_f,
+      a_over_sigma
+    )
     
     pvals_son <- 
       with(fstats, 
@@ -240,7 +250,6 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     
   }
   
-  deg_f <- length(inputtime) - 3
   
   # return values
   list(
@@ -251,7 +260,8 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     ssx = ssx,
     # pvals_son_null_weak = pvals_son_null_weak,
     pvals_son = pvals_son,
-    test_stats = test_stats
+    test_stats = test_stats,
+    test_stats_at_quantile = rep(test_stat_at_quantile, length(test_stats))
   )
   
 }
@@ -259,7 +269,8 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
 
 harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
                                                 nuisance_f,
-                                                a_over_sigma) {
+                                                a_over_sigma,
+                                                test_stat_quantile = 0.5) {
   
   # switch the nuisance formula environment to a new environment with this
   # local function's environment as parent, to get both the nuisance variables
@@ -317,6 +328,7 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
     unrest.ssr <- NA
     pvals_son <- NA
     test_stats <- NA
+    test_stat_at_quantile <- NA
     # pvals_son_null_weak <- NA
     
   } else {
@@ -327,6 +339,12 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
     # f-statistic and pvalues (anova() is not useful here)
     fstats <- ((rest.ssr - unrest.ssr)/2) / (unrest.ssr/deg_f)
     pvals <- stats::pf(fstats, 2, deg_f, lower.tail = FALSE)
+    
+    test_stat_at_quantile <- noncentral_test_stat_quantile(
+      test_stat_quantile,
+      2, deg_f,
+      a_over_sigma
+    )
     
     pvals_son <- noncentral_f_test(fstats, 2, deg_f, unrest.fit$x, 
                                    a_over_sigma)
@@ -356,7 +374,8 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
     ssx = ssx,
     # pvals_son_null_weak = pvals_son_null_weak,
     pvals_son = pvals_son,
-    test_stats = fstats
+    test_stats = fstats,
+    test_stats_at_quantile = rep(test_stat_at_quantile, length(fstats))
   )
   
 }
@@ -441,7 +460,8 @@ normalize_one_ts_r_pol <- function(inputts, inputtime, norm.pol.degree,
 
 
 # harmonic regression one time series (with NAs) --------------------------
-fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
+fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma,
+                             test_stat_quantile = 0.5) {
   
   n.non.na <- length(which(!is.na(inputts)))
   if (n.non.na < 3) {
@@ -454,7 +474,7 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   # harmonic regression
@@ -476,7 +496,7 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   
@@ -485,6 +505,8 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
   coeffs <- stats::coef(inputts.fit)
   pars <- calculate_amp_phi(coeffs[2], coeffs[3])
   
+  deg_f <- n.non.na - 3
+  
   if (n.non.na == 3) {
     
     pval <- NA
@@ -492,6 +514,7 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
     fit.res.ssr <- NA
     pval_son <- NA
     test_stat <- NA
+    test_stat_at_quantile <- NA
     # pval_son_null_weak <- NA
     
   } else {
@@ -506,6 +529,12 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
       stats::pf(test_stat, 
                 inputts_fstat["numdf"], inputts_fstat["dendf"],
                 lower.tail = FALSE)
+    )
+    
+    test_stat_at_quantile <-  noncentral_test_stat_quantile(
+      test_stat_quantile,
+      2, deg_f,
+      a_over_sigma
     )
     
     pval_son <- 
@@ -523,7 +552,6 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
     
   }
   
-  deg_f <- n.non.na - 3
   
   list(pars = pars,
        coeffs = coeffs, ci = ci,
@@ -533,14 +561,16 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma) {
        pval = pval,
        # pval_son_null_weak <- 1 - pval_son
        pval_son = pval_son,
-       test_stat = test_stat
+       test_stat = test_stat,
+       test_stat_at_quantile = test_stat_at_quantile
   )
   
 }
 
 
 fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
-                                      nuisance_f, a_over_sigma) {
+                                      nuisance_f, a_over_sigma,
+                                      test_stat_quantile = 0.5) {
   
   # switch the nuisance formula environment to a new environment with this
   # local function's environment as parent, to get both the nuisance variables
@@ -560,6 +590,7 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
   # check for enough degrees of freedom
   deg_f <- n.non.na - (nuisance_dim + 2)
+  
   if (deg_f < 0) {
     return(list(
       pars = c(amp = NA, phi = NA),
@@ -570,7 +601,7 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   
@@ -598,7 +629,7 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   
@@ -615,6 +646,7 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     unrest.ssr <- NA
     pval_son <- NA
     test_stat <- NA
+    test_stat_at_quantile <- NA
     # pval_son_null_weak <- NA
     
   } else {
@@ -626,6 +658,11 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     # f-statistic and pvalues
     test <- stats::anova(rest.fit, unrest.fit)
     test_stat <- test$F[2]
+    test_stat_at_quantile <- noncentral_test_stat_quantile(
+      test_stat_quantile,
+      2, deg_f,
+      a_over_sigma
+    )
     pval <- test$`Pr(>F)`[2]
     
     pval_son <- 
@@ -653,14 +690,16 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     # pval_son_null_weak = pval_son_null_weak,
     pval = pval, 
     pval_son = pval_son,
-    test_stat = test_stat
+    test_stat = test_stat,
+    test_stat_at_quantile = test_stat_at_quantile
   )
 }
 
 
 # robust harmonic regression one time series (with NAs) -------------------
 fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
-                               a_over_sigma, robust_scores) {
+                               a_over_sigma, robust_scores,
+                               test_stat_quantile = 0.5) {
   
   n.non.na <- length(which(!is.na(inputts)))
   if (n.non.na < 3) {
@@ -674,7 +713,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   
@@ -699,7 +738,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   
@@ -719,7 +758,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       pval = NA,
       # pval_son_null_weak = NA,
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   
@@ -740,6 +779,8 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
   # (see for instance Davison pp. 383--384)
   mean_r <- drop(crossprod(coeffs, colMeans(inputts.fit$x)))
   
+  deg_f <- (n.non.na - 3)
+  
   if (n.non.na == 3) {
     
     pval <- NA
@@ -748,6 +789,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     sigma_hat <- NA
     pval_son <- NA
     test_stat <- NA
+    test_stat_at_quantile <- NA
     # pval_son_null_weak <- NA,
     if (normalize) {
       pars[, "amp"] <- pars[, "amp"]/mean_r
@@ -771,6 +813,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       pval <- NA
       pval_son <- NA
       test_stat <- NA
+      test_stat_at_quantile <- NA
       # pval_son_null_weak <- NA
       
       #   return(list(pars = c(amp = NA, phi = NA),
@@ -807,6 +850,11 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       # NOTE: summary.rfit() calls drop.test() and assigns its list element "F"
       # to "dropstat" 
       test_stat <- drop(rfit_summary$dropstat)
+      test_stat_at_quantile <- noncentral_test_stat_quantile(
+        test_stat_quantile,
+        2, deg_f,
+        a_over_sigma
+      )
       
     }
     
@@ -840,13 +888,14 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     mean = mean_r,
     fit.vals = fit.vals,
     ssr = unname(fit.res.ssr), 
-    deg_f = (n.non.na - 3), 
+    deg_f = deg_f, 
     sigma_hat = unname(sigma_hat),
     ssx = ssx,
     # pval_son_null_weak = pval_son_null_weak,
     pval = pval, 
     pval_son = pval_son,
-    test_stat = test_stat
+    test_stat = test_stat,
+    test_stat_at_quantile = test_stat_at_quantile
   )
   
 }
@@ -854,7 +903,8 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
 
 fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
                                         nuisance_f, normalize = FALSE, 
-                                        a_over_sigma, robust_scores) {
+                                        a_over_sigma, robust_scores,
+                                        test_stat_quantile = 0.5) {
   
   # switch the nuisance formula environment to a new environment with this
   # local function's environment as parent, to get both the nuisance variables
@@ -877,6 +927,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
   # check for enough degrees of freedom
   deg_f <- n.non.na - (nuisance_dim + 2)
+  
   if (deg_f < 0) {
     return(list(
       pars = c(amp = NA, phi = NA),
@@ -888,7 +939,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
       pval = NA,
       # pval_son_null_weak = NA, 
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   
@@ -941,7 +992,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
       pval = NA,
       # pval_son_null_weak = NA, 
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   
@@ -960,7 +1011,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
       pval = NA,
       # pval_son_null_weak = NA, 
       pval_son = NA,
-      test_stat = NA
+      test_stat = NA, test_stat_at_quantile = NA
     ))
   }
   
@@ -990,6 +1041,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     sigma_hat <- NA
     pval_son <- NA
     test_stat <- NA
+    test_stat_at_quantile <- NA
     # pval_son_null_weak <- NA 
     if (normalize) {
       pars[, "amp"] <- pars[, "amp"]/mean_r
@@ -1016,6 +1068,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
       pval <- NA
       pval_son <- NA
       test_stat <- NA
+      test_stat_at_quantile <- NA
       # pval_son_null_weak <- NA 
       
       #   return(list(pars = c(amp = NA, phi = NA),
@@ -1031,6 +1084,11 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
                               unrest.fit$x,
                               a_over_sigma)
       test_stat <- drop(rfit_testresult$F)
+      test_stat_at_quantile <- noncentral_test_stat_quantile(
+        test_stat_quantile,
+        2, deg_f,
+        a_over_sigma
+      )
       # pval_son_null_weak <- 1 - 
       #   noncentral_f_test(drop(rfit_testresult$F), 
       #                     rfit_testresult$df1,
@@ -1072,7 +1130,8 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     # pval_son_null_weak = pval_son_null_weak, 
     pval = pval, 
     pval_son = pval_son,
-    test_stat = test_stat
+    test_stat = test_stat,
+    test_stat_at_quantile = test_stat_at_quantile
   )
   
 }
