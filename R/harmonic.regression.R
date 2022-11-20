@@ -1406,6 +1406,8 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
 #'   \code{Rfit::bentscores1} (\code{Rfit::bentscores3}) may be more
 #'   appropriate, respectively. For heavy-tailed distributions in both
 #'   directions, \code{Rfit::bentscores4} are recommended.
+#' @param test_stat_quantile Numeric between 0 and 1. See return value for
+#'   explanation.
 #'   
 #' @return A list containing: \tabular{ll}{
 #'  \code{means} \tab Vector (if \code{norm.pol = FALSE}) or matrix (otherwise) 
@@ -1448,6 +1450,8 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
 #'  a noncentral chi-square test, which is slightly more conservative. \cr
 #'  \code{test_stats} \tab The F test statistic for the harmonic regression p
 #'  values. \cr
+#'  \code{test_stats_at_quantile} The expected F test statistics, given the
+#'  value of \code{a_over_sigma}, at the quantile \code{test_stat_quantile}. \cr
 #' }
 #' 
 #' @examples
@@ -1493,7 +1497,8 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                 nuisance_f = NULL, robust = FALSE,
                                 a_over_sigma = 1,
                                 n_cores = 1L,
-                                robust_scores = Rfit::wscores) {
+                                robust_scores = Rfit::wscores,
+                                test_stat_quantile = 0.5) {
   
   # check that input data come as numerics
   if (!is.numeric(inputts) || !is.numeric(inputtime)) {
@@ -1526,6 +1531,11 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
     stop("Time series object with NAs was supplied.  This is not yet ", 
          "supported; please supply data containing NAs as a plain ",  
          "matrix.  Aborting.")
+  }
+  
+  if (!is.numeric(test_stat_quantile) || length(test_stat_quantile) > 1L ||
+      test_stat_quantile < 0 || test_stat_quantile > 1) {
+    stop("test_stat_quantile should be one number between 0 and 1")
   }
   
   if (robust) {
@@ -1565,13 +1575,17 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                                         a_over_sigma,
                                                       n_cores = n_cores,
                                                       robust_scores =
-                                                        robust_scores)
+                                                        robust_scores,
+                                                      test_stat_quantile = 
+                                                        test_stat_quantile)
         } else { 
           results <- harmonic_regression_nas(norm.ts, inputtime, Tau,
                                              robust = TRUE, normalize = FALSE,
                                              a_over_sigma = a_over_sigma,
                                              n_cores = n_cores,
-                                             robust_scores = robust_scores)
+                                             robust_scores = robust_scores,
+                                             test_stat_quantile = 
+                                               test_stat_quantile)
         }
         results <- append(results, list(norm.fit.vals = results$fit.vals),
                           after = 1)
@@ -1596,14 +1610,18 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                                         a_over_sigma,
                                                       n_cores = n_cores,
                                                       robust_scores =
-                                                        robust_scores)
+                                                        robust_scores,
+                                                      test_stat_quantile = 
+                                                        test_stat_quantile)
           
         } else {
           results <- harmonic_regression_nas(norm.ts, inputtime, Tau,
                                              robust = TRUE, normalize = TRUE,
                                              a_over_sigma = a_over_sigma,
                                              n_cores = n_cores,
-                                             robust_scores = robust_scores)
+                                             robust_scores = robust_scores,
+                                             test_stat_quantile = 
+                                               test_stat_quantile)
           # reset the intercept to 1 for consistency with classic harmonic
           # regression
           results$coeffs[, 1] <- 1
@@ -1630,13 +1648,17 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                                     a_over_sigma = a_over_sigma,
                                                     n_cores = n_cores,
                                                     robust_scores =
-                                                      robust_scores)
+                                                      robust_scores,
+                                                    test_stat_quantile = 
+                                                      test_stat_quantile)
       } else {
         results <- harmonic_regression_nas(inputts, inputtime, Tau,
                                            robust = TRUE, normalize = FALSE,
                                            a_over_sigma = a_over_sigma,
                                            n_cores = n_cores,
-                                           robust_scores = robust_scores)
+                                           robust_scores = robust_scores,
+                                           test_stat_quantile = 
+                                             test_stat_quantile)
       }
     }
     
@@ -1670,13 +1692,20 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                                       normalize = FALSE,
                                                       a_over_sigma = 
                                                         a_over_sigma,
-                                                      n_cores = n_cores)
+                                                      n_cores = n_cores,
+                                                      robust_scores = 
+                                                        robust_scores,
+                                                      test_stat_quantile = 
+                                                        test_stat_quantile)
         } else {
           results <- harmonic_regression_nas(norm.ts, inputtime, Tau,
                                              robust = FALSE,
                                              normalize = FALSE,
                                              a_over_sigma = a_over_sigma,
-                                             n_cores = n_cores)
+                                             n_cores = n_cores,
+                                             robust_scores = robust_scores,
+                                             test_stat_quantile = 
+                                               test_stat_quantile)
         }
         # results$fit.vals are really fits to normalized time series
         # fit.vals will be recalculated below
@@ -1699,13 +1728,20 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                                       normalize = FALSE,
                                                       a_over_sigma = 
                                                         a_over_sigma,
-                                                      n_cores = n_cores)
+                                                      n_cores = n_cores,
+                                                      robust_scores = 
+                                                        robust_scores,
+                                                      test_stat_quantile = 
+                                                        test_stat_quantile)
         } else {
           results <- harmonic_regression_nas(inputts, inputtime, Tau,
                                              robust = FALSE,
                                              normalize = FALSE,
                                              a_over_sigma = a_over_sigma,
-                                             n_cores = n_cores)
+                                             n_cores = n_cores,
+                                             robust_scores = robust_scores,
+                                             test_stat_quantile = 
+                                               test_stat_quantile)
         }
         results <- c(list(means = colMeans(inputts, na.rm = TRUE)), results)
       }
@@ -1723,11 +1759,15 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                                          inputtime, Tau, 
                                                          nuisance_f,
                                                          a_over_sigma = 
-                                                           a_over_sigma)
+                                                           a_over_sigma,
+                                                         test_stat_quantile = 
+                                                           test_stat_quantile)
         } else {
           results <- harmonic_regression_matrix(norm.ts.list$norm.ts, 
                                                 inputtime, Tau,
-                                                a_over_sigma = a_over_sigma)
+                                                a_over_sigma = a_over_sigma,
+                                                test_stat_quantile = 
+                                                  test_stat_quantile)
         }
         results <- append(results, list(norm.fit.vals = results$fit.vals),
                           after = 1)
@@ -1748,10 +1788,14 @@ harmonic_regression <- function(inputts, inputtime, Tau = 24,
                                                          inputtime, Tau, 
                                                          nuisance_f,
                                                          a_over_sigma = 
-                                                           a_over_sigma)
+                                                           a_over_sigma,
+                                                         test_stat_quantile = 
+                                                           test_stat_quantile)
         } else {
           results <- harmonic_regression_matrix(inputts, inputtime, Tau,
-                                                a_over_sigma = a_over_sigma)
+                                                a_over_sigma = a_over_sigma,
+                                                test_stat_quantile = 
+                                                  test_stat_quantile)
         }
         results <- c(list(means = colMeans(inputts)), results)
       }
