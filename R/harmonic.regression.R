@@ -236,7 +236,8 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
            )
       )
     test_stats_at_quantile <- structure(
-      rep(test_stat_at_quantile, length(test_stats)),
+      # note: this is a vector, since numdf and dendf are vectors
+      test_stat_at_quantile,
       names = names(inputts.fit.summaries)
     )
     
@@ -1878,7 +1879,8 @@ summary.hregm <- function(object, ...) {
     sigma_hat = object$sigma_hat,
     pvalues = object$pvals,
     pvalues_son = object$pvals_son,
-    test_stats = object$test_stats
+    test_stats = object$test_stats,
+    test_stats_at_quantile = object$test_stats_at_quantile
   )
   rownames(results) <- rownames(object$pars)
   results
