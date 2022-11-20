@@ -1142,7 +1142,8 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
 harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
                                     normalize = FALSE, 
                                     a_over_sigma,
-                                    n_cores, robust_scores = robust_scores) {
+                                    n_cores, robust_scores,
+                                    test_stat_quantile = 0.5) {
   
   if (length(inputtime) < 3) {
     stop("These time series are too short for a meaningful analysis.  ",
@@ -1153,11 +1154,12 @@ harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
   # if (n_cores == 1L || !requireNamespace("future.apply", quietly = TRUE)) {
   if (!robust) {
     result.list <- apply(inputts, 2, fit_one_harmonic, inputtime, Tau,
-                         a_over_sigma)
+                         a_over_sigma, test_stat_quantile)
   } else {
     result.list <- apply(inputts, 2, fit_one_harmonic_r, inputtime, Tau,
                          normalize = normalize,
-                         a_over_sigma, robust_scores)
+                         a_over_sigma, robust_scores,
+                         test_stat_quantile)
   }
   # } else {
   #   future::plan(future::multisession,
@@ -1183,6 +1185,7 @@ harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
   pvals <- sapply(result.list, "[[", "pval")
   pvals_son <- sapply(result.list, "[[", "pval_son")
   test_stats <- sapply(result.list, "[[", "test_stat")
+  test_stats_at_quantile <- sapply(result.list, "[[", "test_stat_at_quantile")
   # pvals_son_null_weak <- 
   #   sapply(result.list, "[[", "pval_son_null_weak")
   pars <- t(sapply(result.list, "[[", "pars"))
@@ -1205,7 +1208,8 @@ harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
     ssx = ssx, 
     # pvals_son_null_weak = pvals_son_null_weak,
     pvals_son = pvals_son,
-    test_stats = test_stats
+    test_stats = test_stats,
+    test_stats_at_quantile = test_stats_at_quantile
   )
   
   if (robust) {
@@ -1220,8 +1224,8 @@ harmonic_regression_nas <- function(inputts, inputtime, Tau, robust = FALSE,
 harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
                                              nuisance_f, robust = FALSE,
                                              normalize = FALSE, a_over_sigma,
-                                             n_cores, robust_scores =
-                                               robust_scores) {
+                                             n_cores, robust_scores,
+                                             test_stat_quantile = 0.5) {
   
   nuisance_dim <- ncol(stats::model.matrix(nuisance_f))
   # check for enough degrees of freedom
@@ -1234,11 +1238,11 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
   # if (n_cores == 1L || !requireNamespace("future.apply", quietly = TRUE)) {
   if (!robust) {
     result.list <- apply(inputts, 2, fit_one_harmonic_nuisance, inputtime, 
-                         Tau, nuisance_f, a_over_sigma)
+                         Tau, nuisance_f, a_over_sigma, test_stat_quantile)
   } else {
     result.list <- apply(inputts, 2, fit_one_harmonic_nuisance_r, inputtime, 
                          Tau, nuisance_f, normalize = normalize, a_over_sigma,
-                         robust_scores)
+                         robust_scores, test_stat_quantile)
   }
   # } else {
   #   future::plan(future::multisession, 
@@ -1265,6 +1269,7 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
   pvals <- sapply(result.list, "[[", "pval")
   pvals_son <- sapply(result.list, "[[", "pval_son")
   test_stats <- sapply(result.list, "[[", "test_stat")
+  test_stats_at_quantile <- sapply(result.list, "[[", "test_stat_at_quantile")
   # pvals_son_null_weak <- 
   #   sapply(result.list, "[[", "pval_son_null_weak")
   pars <- t(sapply(result.list, "[[", "pars"))
@@ -1287,7 +1292,8 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
     ssx = ssx, 
     # pvals_son_null_weak = pvals_son_null_weak,
     pvals_son = pvals_son,
-    test_stats = test_stats
+    test_stats = test_stats,
+    test_stats_at_quantile = test_stats_at_quantile
   )
   
   if (robust) {
