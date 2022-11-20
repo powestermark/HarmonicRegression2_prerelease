@@ -225,10 +225,19 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     names(pvals) <- names(inputts.fit.summaries)
     
     test_stats <- fstats$value
-    test_stat_at_quantile <- noncentral_test_stat_quantile(
-      test_stat_quantile,
-      2, deg_f,
-      a_over_sigma
+    names(test_stats) <- names(inputts.fit.summaries)
+    
+    test_stat_at_quantile <- 
+      with(fstats, 
+           noncentral_test_stat_quantile(
+             test_stat_quantile,
+             numdf, dendf, inputts.fit$x,
+             a_over_sigma
+           )
+      )
+    test_stats_at_quantile <- structure(
+      rep(test_stat_at_quantile, length(test_stats)),
+      names = names(inputts.fit.summaries)
     )
     
     pvals_son <- 
@@ -261,7 +270,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     # pvals_son_null_weak = pvals_son_null_weak,
     pvals_son = pvals_son,
     test_stats = test_stats,
-    test_stats_at_quantile = rep(test_stat_at_quantile, length(test_stats))
+    test_stats_at_quantile = test_stats_at_quantile
   )
   
 }
