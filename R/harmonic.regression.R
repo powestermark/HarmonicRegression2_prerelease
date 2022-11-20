@@ -351,8 +351,12 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
     
     test_stat_at_quantile <- noncentral_test_stat_quantile(
       test_stat_quantile,
-      2, deg_f,
+      2, deg_f, unrest.fit$x,
       a_over_sigma
+    )
+    test_stats_at_quantile <- structure(
+      rep(test_stat_at_quantile, length(fstats)),
+      names = names(unrest.ssr)
     )
     
     pvals_son <- noncentral_f_test(fstats, 2, deg_f, unrest.fit$x, 
@@ -383,8 +387,8 @@ harmonic_regression_matrix_nuisance <- function(inputts, inputtime, Tau,
     ssx = ssx,
     # pvals_son_null_weak = pvals_son_null_weak,
     pvals_son = pvals_son,
-    test_stats = fstats,
-    test_stats_at_quantile = rep(test_stat_at_quantile, length(fstats))
+    test_stats = structure(fstats, names = names(unrest.ssr)),
+    test_stats_at_quantile = test_stats_at_quantile
   )
   
 }
@@ -540,11 +544,11 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma,
                 lower.tail = FALSE)
     )
     
-    test_stat_at_quantile <-  noncentral_test_stat_quantile(
+    test_stat_at_quantile <- unname(noncentral_test_stat_quantile(
       test_stat_quantile,
-      2, deg_f,
+      inputts_fstat["numdf"], inputts_fstat["dendf"], inputts.fit$x,
       a_over_sigma
-    )
+    ))
     
     pval_son <- 
       unname(noncentral_f_test(test_stat, 
@@ -667,11 +671,11 @@ fit_one_harmonic_nuisance <- function(inputts, inputtime, Tau,
     # f-statistic and pvalues
     test <- stats::anova(rest.fit, unrest.fit)
     test_stat <- test$F[2]
-    test_stat_at_quantile <- noncentral_test_stat_quantile(
+    test_stat_at_quantile <- unname(noncentral_test_stat_quantile(
       test_stat_quantile,
-      2, deg_f,
+      test$Df[2], test$Res.Df[2], unrest.fit$x,
       a_over_sigma
-    )
+    ))
     pval <- test$`Pr(>F)`[2]
     
     pval_son <- 
@@ -861,7 +865,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
       test_stat <- drop(rfit_summary$dropstat)
       test_stat_at_quantile <- noncentral_test_stat_quantile(
         test_stat_quantile,
-        2, deg_f,
+        df_ssq_red, deg_f, inputts.fit$x,
         a_over_sigma
       )
       
@@ -1095,7 +1099,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
       test_stat <- drop(rfit_testresult$F)
       test_stat_at_quantile <- noncentral_test_stat_quantile(
         test_stat_quantile,
-        2, deg_f,
+        rfit_testresult$df1, deg_f, unrest.fit$x,
         a_over_sigma
       )
       # pval_son_null_weak <- 1 - 
