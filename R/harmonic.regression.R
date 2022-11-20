@@ -103,17 +103,12 @@ noncentral_test_stat_quantile <- function(test_stat_quantile,
   H1 <- X1 %*% solve(crossprod(X1)) %*% t(X1)
   Z2 <- (diag(dim(X2)[1]) - H1) %*% X2
   
-  # smallest eigenvalue of Z2 (equal to N/2 if balanced)
-  mineig <- min(eigen(crossprod(Z2), 
+  # largest eigenvalue of Z2 (equal to N/2 if balanced)
+  maxeig <- max(eigen(crossprod(Z2), 
                       only.values = TRUE, symmetric = TRUE)$values)
   
   # p value according to noncentral F distribution
-  delsq <- a_over_sigma^2*mineig
-  # note that this function could be useful also in the robust context; the
-  # 3*pi correction (see below) is not necessarily needed here, since this
-  # function would in the context of semiparametric reduction of dispersion be
-  # used only with upper tail (test against weak or zero rhythmicity compound
-  # null), for which higher ncp makes the test slightly more conservative
+  delsq <- a_over_sigma^2*maxeig
   stats::qf(test_stat_quantile, df1 = deg_f1, df2 = deg_f2, ncp = delsq)
   
 }
@@ -1464,7 +1459,7 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
 #'  a noncentral chi-square test, which is slightly more conservative. \cr
 #'  \code{test_stats} \tab The F test statistic for the harmonic regression p
 #'  values. \cr
-#'  \code{test_stats_at_quantile} The expected F test statistics, given the
+#'  \code{test_stats_at_quantile} \tab The expected F test statistics, given the
 #'  value of \code{a_over_sigma}, at the quantile \code{test_stat_quantile}. \cr
 #' }
 #' 
