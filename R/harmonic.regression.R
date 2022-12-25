@@ -33,7 +33,7 @@ calculate_ci_amp_phi <- function(amp, a_cos, b_sin, fit_res_ssr, R, deg_f) {
 calculate_ci_amp_phi_r <- function(amp, a_cos, b_sin, ssx, thefit) {
   # if (det(ssx) == 0 | kappa(ssx) > 0.5/.Machine$double.eps)
   #   return(cbind(amp = NA, phi = NA))
-  vcovmat <- vcov(thefit)[2:3, 2:3]
+  vcovmat <- stats::vcov(thefit)[2:3, 2:3]
   Ja <- cbind(ifelse(amp > 0, a_cos/amp, 0), 
               ifelse(amp > 0, b_sin/amp, 0))
   Jp <- cbind(ifelse(amp > 0, -b_sin/amp^2, 0), 
