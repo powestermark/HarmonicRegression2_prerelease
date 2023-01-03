@@ -83,7 +83,8 @@ noncentral_chisq_test <- function(x2, deg_f, X, a_over_sigma) {
   Z2 <- (diag(dim(X2)[1]) - H1) %*% X2
   
   # smallest eigenvalue of Z2 (equal to N/2 if balanced)
-  mineig <- min(eigen(crossprod(Z2), only.values = TRUE)$values)
+  mineig <- min(eigen(crossprod(Z2), 
+                      only.values = TRUE, symmetric = TRUE)$values)
   
   # p value according to noncentral F distribution
   # see Hettmansperger & McKean (2011) page 203 for factor 3/pi
@@ -103,12 +104,18 @@ noncentral_test_stat_quantile <- function(test_stat_quantile,
   H1 <- X1 %*% solve(crossprod(X1)) %*% t(X1)
   Z2 <- (diag(dim(X2)[1]) - H1) %*% X2
   
-  # largest eigenvalue of Z2 (equal to N/2 if balanced)
-  maxeig <- max(eigen(crossprod(Z2), 
+  # smallest eigenvalue of Z2 (equal to N/2 if balanced)
+  # This results in a lower ncp (for unbalanced design),
+  # in turn resulting in a lower test statistic for given quantile.
+  # In turn, this will make more sample test statistics exceed this lower test
+  # statistic. These fractions may be used to estimate pi0, the size of the
+  # compound null population. This usually is better to over-estimate than 
+  # under-estimate. Therefor, we use min() here.
+  mineig <- min(eigen(crossprod(Z2), 
                       only.values = TRUE, symmetric = TRUE)$values)
   
   # p value according to noncentral F distribution
-  delsq <- a_over_sigma^2*maxeig
+  delsq <- a_over_sigma^2*mineig
   stats::qf(test_stat_quantile, df1 = deg_f1, df2 = deg_f2, ncp = delsq)
   
 }
@@ -206,7 +213,7 @@ harmonic_regression_matrix <- function(inputts, inputtime, Tau,
     # else
     #   fit.res.ssr <- sum(residuals(inputts.fit)^2)
     
-    fit.res.ssr <- deviance(inputts.fit)
+    fit.res.ssr <- stats::deviance(inputts.fit)
     
     inputts.fit.summaries <- summary(inputts.fit)
     names(inputts.fit.summaries) <- 
@@ -529,7 +536,7 @@ fit_one_harmonic <- function(inputts, inputtime, Tau, a_over_sigma,
   } else {
     
     # sum squared residual of the unrestricted model; fitted values
-    fit.res.ssr <- deviance(inputts.fit)
+    fit.res.ssr <- stats::deviance(inputts.fit)
     
     # f-statistic and pvalues
     inputts_fstat <- summary(inputts.fit)$fstatistic
