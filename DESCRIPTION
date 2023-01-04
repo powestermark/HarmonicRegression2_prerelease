@@ -28,4 +28,4 @@ Imports:
     Rfit (>= 0.23.0),
 Depends:
     R (>= 3.5)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
