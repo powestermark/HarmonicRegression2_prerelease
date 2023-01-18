@@ -67,7 +67,7 @@ noncentral_f_test <- function(Fval, deg_f1, deg_f2, X, a_over_sigma) {
   # note that this function could be useful also in the robust context; the
   # 3*pi correction (see below) is not necessarily needed here, since this
   # function would in the context of semiparametric reduction of dispersion be
-  # used only with upper tail (test against weak or zero rhythmicity compound
+  # used only with upper tail (test against weak or zero rhythmicity composite
   # null), for which higher ncp makes the test slightly more conservative
   stats::pf(Fval, df1 = deg_f1, df2 = deg_f2, ncp = delsq)
   
@@ -109,7 +109,7 @@ noncentral_test_stat_quantile <- function(test_stat_quantile,
   # in turn resulting in a lower test statistic for given quantile.
   # In turn, this will make more sample test statistics exceed this lower test
   # statistic. These fractions may be used to estimate pi0, the size of the
-  # compound null population. This usually is better to over-estimate than 
+  # composite null population. This usually is better to over-estimate than 
   # under-estimate. Therefor, we use min() here.
   mineig <- min(eigen(crossprod(Z2), 
                       only.values = TRUE, symmetric = TRUE)$values)
@@ -1323,7 +1323,7 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
 # Documentation noncentral test for (stronger) rhythmicity (not used at the
 # moment):
 # \code{pvals_son_null_weak} \tab Vector of p-values according to a 
-# noncentral F-test for rhythmicity against a compound null hypothesis of
+# noncentral F-test for rhythmicity against a composite null hypothesis of
 # arrhythmicity or weak rhythmicity, defined by the cutoff 
 
 
@@ -1461,7 +1461,7 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
 #'  covariances for the dependent variables corresponding to (\eqn{m}, \eqn{a
 #'  cos(\omega t)}, and \eqn{b sin(\omega t)}, respecively). \cr
 #'  \code{pvals_son} \tab Vector of p-values according to a noncentral F-
-#'  test for arhythmicity against a compound null hypothesis of rhythmicity, 
+#'  test for arhythmicity against a composite null hypothesis of rhythmicity, 
 #'  defined by the cutoff \code{a_over_sigma}. If \code{robust = TRUE}, this is 
 #'  a noncentral chi-square test, which is slightly more conservative. \cr
 #'  \code{test_stats} \tab The F test statistic for the harmonic regression p
