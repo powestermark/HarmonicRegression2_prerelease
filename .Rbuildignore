@@ -1,3 +1,5 @@
+^renv$
+^renv\.lock$
 ^fixed_bugs\.md$
 ^R/fixed_bugs\.md$
 ^sandbox$
