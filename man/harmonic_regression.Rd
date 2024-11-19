@@ -105,7 +105,7 @@ series, same dimensionality as \code{inputts}. \cr
 between 0 and \eqn{2\pi}). \cr
 \code{pvals} \tab Vector of p-values according to an F-test of the model fit
 against a restricted model (mean-centering only). \cr
-\code{ci} \tab Data frame of one-sided approximative 95\\% (\eqn{2\sigma})
+\code{ci} \tab Data frame of one-sided approximate 95\% (\eqn{2\sigma})
 confidence intervals for the estimated amplitudes and phases. \cr
 \code{coeffs} \tab Matrix of estimated model parameters \eqn{a} and \eqn{b}.
 \cr
