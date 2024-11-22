@@ -1497,7 +1497,7 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
 #'
 #' # inspect results
 #' hreg
-#' summary(hreg)
+#' head(summary(hreg))
 #'
 #' # inspect p values
 #' summary(hreg$pvals)
@@ -1847,17 +1847,24 @@ harmonic.regression <- harmonic_regression
 
 
 #' @export
-print.hregm <- function(x, fdr = 0.1, amp = 0.15, ...) {
+print.hregm <- function(x, fdr = 0.1, amp = 0.15, regularize = TRUE, ...) {
 
   n_ts <- length(x$pvals)
   cat(paste("\n\tHarmonic regression results for", n_ts, "time series.\n"))
 
   if (requireNamespace("qvalue", quietly = TRUE) &&
       length(x$pvals) >= 11L) {
-    qobj <- qvalue::qvalue(x$pvals, pi0.method = "bootstrap")
+    if (regularize) {
+      pi0_est <- qvalue::pi0est(regularize_pvals(x$pvals),
+                                pi0.method = "bootstrap")$pi0
+      qobj <- qvalue::qvalue(x$pvals, pi0.method = "bootstrap", pi0 = pi0_est)
+    } else {
+      qobj <- qvalue::qvalue(x$pvals, pi0.method = "bootstrap")
+      pi0_est <- qobj$pi0
+    }
     p_adj <- qobj$qvalues
     cat(paste("\tEstimated proportion rhythmic time series:",
-              paste0(round(1 - qobj$pi0, digits = 2)*100, "%\n")))
+              paste0(round(1 - pi0_est, digits = 2)*100, "%\n")))
   } else {
     p_adj <- stats::p.adjust(x$pvals, method = "BH")
   }

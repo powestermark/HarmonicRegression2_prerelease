@@ -195,7 +195,7 @@ hreg <- HarmonicRegression::harmonic_regression(
 
 # inspect results
 hreg
-summary(hreg)
+head(summary(hreg))
 
 # inspect p values
 summary(hreg$pvals)
