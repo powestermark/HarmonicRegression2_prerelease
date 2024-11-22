@@ -1855,8 +1855,12 @@ print.hregm <- function(x, fdr = 0.1, amp = 0.15, regularize = TRUE, ...) {
   if (requireNamespace("qvalue", quietly = TRUE) &&
       length(x$pvals) >= 11L) {
     if (regularize) {
-      pi0_est <- qvalue::pi0est(regularize_pvals(x$pvals),
-                                pi0.method = "bootstrap")$pi0
+      pi0_est <- qvalue::pi0est(
+        regularize_pvals(
+          x$pvals,
+          suppress_message = TRUE
+        ),
+        pi0.method = "bootstrap")$pi0
       qobj <- qvalue::qvalue(x$pvals, pi0.method = "bootstrap", pi0 = pi0_est)
     } else {
       qobj <- qvalue::qvalue(x$pvals, pi0.method = "bootstrap")
