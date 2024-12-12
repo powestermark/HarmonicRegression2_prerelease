@@ -74,7 +74,7 @@ noncentral_f_test <- function(Fval, deg_f1, deg_f2, X, a_over_sigma) {
 }
 
 noncentral_chisq_test <- function(x2, deg_f, X, a_over_sigma) {
-  # where X is the N x 3 design matrix.
+  # where X is the design matrix.
   X1 <- X[, -(2:3), drop = FALSE]
   # model matrix harmonics
   X2 <- X[, 2:3]
@@ -96,7 +96,7 @@ noncentral_chisq_test <- function(x2, deg_f, X, a_over_sigma) {
 noncentral_test_stat_quantile <- function(test_stat_quantile,
                                           deg_f1, deg_f2, X, a_over_sigma) {
 
-  # where X is the N x 3 design matrix.
+  # where X is the design matrix.
   X1 <- X[, -(2:3), drop = FALSE]
   # model matrix harmonics
   X2 <- X[, 2:3]
@@ -817,6 +817,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
 
   # compute robust mean by averaging over the design matrix
   # (see for instance Davison pp. 383--384)
+  # This is a special case of the Schur complement/FWL approach
   mean_r <- drop(crossprod(coeffs, colMeans(inputts.fit$x)))
 
   deg_f <- (n.non.na - 3)
@@ -1083,6 +1084,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
 
   # compute robust mean with by averaging over the design matrix
   # (see for instance Davison pp. 383--384)
+  # This is a special case of the Schur complement/FWL approach.
   mean_r <- drop(crossprod(coeffs, colMeans(unrest.fit$x)))
 
   if (deg_f == 0) {
@@ -1438,11 +1440,7 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
 #'   normalization (ignored if \code{norm.pol = FALSE}).
 #' @param nuisance_f A formula object, representing any nuisance variables to be
 #'   used in addition to the intercept (the estimated overall mean). The user is
-#'   responsible for ensuring that included variables are defined. If
-#'   \code{normalize = TRUE}, normalization by the intercept is performed. Thus
-#'   users should ensure that nuisance variables are centered, or if factors are
-#'   used, that their contrasts are set so that the intercept can be interpreted
-#'   as an overall mean.
+#'   responsible for ensuring that included variables are defined.
 #' @param robust Boolean should a robust semi-parametric method from the package
 #'   "Rfit" be used?
 #' @param a_over_sigma Numeric, for non-central F test for arrhythmicity, this
