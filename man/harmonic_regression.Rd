@@ -37,7 +37,7 @@ harmonic.regression(
 }
 \arguments{
 \item{inputts}{Matrix of time series.  Rows correspond to time points,
-columns to samples.  If a vector is provided, it is coerced to a matrix.}
+columns to features.  If a vector is provided, it is coerced to a matrix.}
 
 \item{inputtime}{Vector of the time points corresponding to the row in the
 time series matrix.}
@@ -58,11 +58,7 @@ normalization (ignored if \code{norm.pol = FALSE}).}
 
 \item{nuisance_f}{A formula object, representing any nuisance variables to be
 used in addition to the intercept (the estimated overall mean). The user is
-responsible for ensuring that included variables are defined. If
-\code{normalize = TRUE}, normalization by the intercept is performed. Thus
-users should ensure that nuisance variables are centered, or if factors are
-used, that their contrasts are set so that the intercept can be interpreted
-as an overall mean.}
+responsible for ensuring that included variables are defined.}
 
 \item{robust}{Boolean should a robust semi-parametric method from the package
 "Rfit" be used?}
