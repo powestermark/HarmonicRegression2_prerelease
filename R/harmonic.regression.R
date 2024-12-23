@@ -850,7 +850,7 @@ fit_one_harmonic_r <- function(inputts, inputtime, Tau, normalize = FALSE,
     if (isa(rfit_summary, "try-error")) {
       warning(paste("The robust testing procedure against the null hypothesis",
                     "did not converge for one",
-                    "sample.  NA is reported for this case"))
+                    "time series.  NA is reported for this case"))
       pval <- NA
       pval_son <- NA
       test_stat <- NA
@@ -1118,7 +1118,7 @@ fit_one_harmonic_nuisance_r <- function(inputts, inputtime, Tau,
     if (isa(rfit_testresult, "try-error")) {
       warning(paste("The robust testing procedure against the null hypothesis",
                     "did not converge for one",
-                    "sample.  NA is reported for this case"))
+                    "time series.  NA is reported for this case"))
       pval <- NA
       pval_son <- NA
       test_stat <- NA
@@ -1425,7 +1425,7 @@ harmonic_regression_nas_nuisance <- function(inputts, inputtime, Tau,
 #' t-tests.
 
 #' @param inputts Matrix of time series.  Rows correspond to time points,
-#'   columns to samples.  If a vector is provided, it is coerced to a matrix.
+#'   columns to features.  If a vector is provided, it is coerced to a matrix.
 #' @param inputtime Vector of the time points corresponding to the row in the
 #'   time series matrix.
 #' @param Tau Scalar giving the oscillation period to estimate and test for.
